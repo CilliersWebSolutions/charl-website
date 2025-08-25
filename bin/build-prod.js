@@ -1,7 +1,7 @@
 import * as esbuild from 'esbuild';
 
 // Config output
-const BUILD_DIRECTORY = 'dist';
+const BUILD_DIRECTORY = 'docs';
 
 // Config entrypoint files
 const ENTRY_POINTS = ['src/index.js'];

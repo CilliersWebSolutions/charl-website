@@ -4,7 +4,7 @@ import { readdirSync } from 'fs';
 import { join, sep } from 'path';
 
 // Config output
-const BUILD_DIRECTORY = 'dist';
+const BUILD_DIRECTORY = 'docs';
 const SERVE_PORT = 3000;
 const SERVE_ORIGIN = `http://localhost:${SERVE_PORT}`;
 
