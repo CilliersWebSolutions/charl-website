@@ -83,9 +83,16 @@ export default class Lining {
         const mouseY = event.clientY / window.innerHeight;
         const spread = 0.5;
 
-        this.layers.forEach((layer, i) => {
-            //layer.position.y = -(i - (this.layers.length - 1) / 2) * spread * mouseY;
-            layer.position.x = (i - (this.layers.length - 1) / 2) * spread * mouseX;
+        // Fan out falling layers
+        this.layerMeshes.forEach((layer, i) => {
+            layer.position.x = (i - (this.layerMeshes.length - 1) / 2) * spread * mouseX;
+            // Optionally, add y fanning if desired:
+            // layer.position.y = layer.userData.targetY + ((i - (this.layerMeshes.length - 1) / 2) * spread * mouseY);
+        });
+
+        // Fan out base layers if you want
+        this.baseMeshes.forEach((layer, i) => {
+            layer.position.x = (i - (this.baseMeshes.length - 1) / 2) * spread * mouseX;
         });
     }
 
