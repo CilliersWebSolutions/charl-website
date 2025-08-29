@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(canvas)
       try {
         new Experience(canvas, container);
+        console.log('commit achieved');
       } catch (error) {
         console.error('Error initializing Experience:', error)
       }

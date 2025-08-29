@@ -1,3 +1,4 @@
+
 import Experience from "../Experience"
 import Environment from "./Environment"
 //import Floor from './Floor'
@@ -39,9 +40,7 @@ export default class World {
 
         if (this.experience.camera)
             this.experience.camera.update()
-        if (this.experience.renderer && this.experience.renderer.instance) {
-    this.experience.renderer.instance.shadowMap.needsUpdate = true;
-}
+        
 
     }
 }
