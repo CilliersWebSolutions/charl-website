@@ -20,28 +20,32 @@ export default class Environment {
     }
 
     addThreePointLights() {
-    // Top-down light, positioned at stone pour origin (min x, min z, above)
-    const topLight = new THREE.DirectionalLight(0xffffff, 2);
-    topLight.position.set(10, 10, -10); // Northwest corner, above, aiming southeast
-    topLight.target.position.set(0, 0, 0);
-    topLight.castShadow = true;
-    topLight.shadow.mapSize.width = 4096;
-    topLight.shadow.mapSize.height = 4096;
-    topLight.shadow.normalBias = 0.02; // Added bias to reduce shadow artifacts
-    topLight.shadow.radius = 12; // Increase for softer shadows
-    this.scene.add(topLight);
-    this.scene.add(topLight.target);
+            // Top-down light, positioned at stone pour origin (min x, min z, above)
+            const topLight = new THREE.DirectionalLight(0xffffff, 2);
+            topLight.position.set(1, 15, -10); // Northwest corner, above, aiming southeast
+            topLight.target.position.set(0, 0, 0);
+            topLight.castShadow = true;
+            topLight.shadow.mapSize.width = 4096;
+            topLight.shadow.mapSize.height = 4096;
+            topLight.shadow.bias = -0.0005; // Negative bias to avoid shadow acne
+            topLight.shadow.normalBias = 0.05; // Slightly higher for soft contact
+            topLight.shadow.radius = 60; // Increase for softer shadows
+            // Make sure shadow camera covers the whole scene
+            topLight.shadow.camera.left = -8;
+            topLight.shadow.camera.right = 8;
+            topLight.shadow.camera.top = 8;
+            topLight.shadow.camera.bottom = -8;
+            topLight.shadow.camera.near = 1;
+            topLight.shadow.camera.far = 40;
+            this.scene.add(topLight);
+            this.scene.add(topLight.target);
 
-        // Secondary angled light for definition
-        const sideLight = new THREE.DirectionalLight(0xffffff, 2);
-        sideLight.position.set(8, 6, 8); // From the side and above
-        sideLight.target.position.set(0, 0, 0);
-        sideLight.castShadow = false; // Optional: set to true if you want more shadows
-        this.scene.add(sideLight);
-        this.scene.add(sideLight.target);
+            // Add helper for top light
+            const topLightHelper = new THREE.DirectionalLightHelper(topLight, 2, 0xff0000);
+            this.scene.add(topLightHelper);
 
-        // Ambient light for soft fill
-        const ambientLight = new THREE.AmbientLight(0x888888, 1);
-        this.scene.add(ambientLight);
+            // Ambient light for soft fill
+            const ambientLight = new THREE.AmbientLight(0x888888, 8);
+            this.scene.add(ambientLight);
     }
 }

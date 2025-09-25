@@ -106,7 +106,19 @@ export default class Lining {
                 mesh.visible = false;
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
-            } else if (i === 1 || i === 4 || i === 6 || i === 9) {
+            } else if (i === 1) {
+                // Layer 1: ensure shadow settings and material
+                mesh.visible = true;
+                mesh.material = new THREE.MeshStandardMaterial({
+                    color: 0x03854c,
+                    roughness: 0.7,
+                    metalness: 0.1,
+                    transparent: false,
+                    opacity: 1 // Not transparent for shadow casting
+                });
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+            } else if (i === 4 || i === 6 || i === 9) {
                 // Green layers
                 mesh.visible = true;
                 mesh.material = new THREE.MeshStandardMaterial({
@@ -219,8 +231,8 @@ export default class Lining {
             // Shadow fade-in logic based on parent layer progress
             const shadowOpacityThreshold = 0.5;
             const fade = parentState.progress;
-            instancedMesh.castShadow = fade > shadowOpacityThreshold;
-            instancedMesh.receiveShadow = fade > shadowOpacityThreshold;
+            instancedMesh.castShadow = true;
+            instancedMesh.receiveShadow = true;
             // Fade in stone material opacity in sync with parent layer
             if (instancedMesh.material) {
                 instancedMesh.material.transparent = true;
@@ -336,8 +348,8 @@ export default class Lining {
             });
             const totalInstances = gridX * gridY * gridZ;
             const instancedMesh = new THREE.InstancedMesh(planeGeo, mat, totalInstances);
-            instancedMesh.castShadow = false;
-            instancedMesh.receiveShadow = false;
+            instancedMesh.castShadow = true;
+            instancedMesh.receiveShadow = true;
             instancedMesh.frustumCulled = false; // Prevent popping for large instanced meshes
             // Manual rotation: 45deg Z and 45deg Y for diamond effect
             const zQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 4);
