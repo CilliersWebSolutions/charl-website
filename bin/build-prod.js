@@ -22,6 +22,11 @@ console.log('Entry points:', ENTRY_POINTS);
         target: 'es2020',
         inject: undefined,  // Do not include live-reload.js in production
         define: {},
+        loader: {
+            '.glsl': 'text' // <-- Add this line
+        },
+    // Do not externalize three or lil-gui; bundle them
+    // external: ['three', 'lil-gui']
     });
 
     // Build files in production

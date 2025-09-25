@@ -13,6 +13,9 @@ export default class World {
 
         this.scene = this.experience.scene
         this.resources = this.experience.resources
+        if (!this.resources) {
+            throw new Error('World: this.resources is undefined. Check Experience initialization and sources.js.');
+        }
         //this.floor = this.experience.floor
 
         this.containerAttribute = container.getAttribute('data-3d');
@@ -23,10 +26,8 @@ export default class World {
 
             // Setup
             if (this.containerAttribute === 'lining') {
-
                 this.Lining = new Lining(this.experience)
-                 this.environment = new Environment(this.experience, container)
-
+                this.environment = new Environment(this.experience, container)
             } 
             else {
                 console.log('nothing was loaded')

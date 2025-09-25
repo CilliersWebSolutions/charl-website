@@ -23,6 +23,11 @@ const context = await esbuild.context({
     define: {
         SERVE_ORIGIN: JSON.stringify(SERVE_ORIGIN),
     },
+    loader: {
+        '.glsl': 'text' // <-- Add this line
+    },
+    // Do not externalize three or lil-gui; bundle them
+    // external: ['three', 'lil-gui']
 });
 
 // Watch and serve files in development

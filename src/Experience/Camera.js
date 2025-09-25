@@ -1,5 +1,6 @@
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+
+import * as THREE from 'three';
 
 
 export default class Camera {
@@ -12,10 +13,8 @@ export default class Camera {
         this.canvas = experience.canvas
         this.containerAttribute = container.getAttribute('data-3d');
         this.setInstance()
-      
-
-
     }
+
 
     setInstance() {
         const aspectRatio = this.sizes.width / this.sizes.height;
