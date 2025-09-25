@@ -17,10 +17,6 @@ window.Webflow.push(() => {
   new Counting();
 });
 
-if (gsap && ScrollTrigger) {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   function initializeExperience(containers) {
     containers.forEach(container => {

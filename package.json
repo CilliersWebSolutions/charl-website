@@ -33,7 +33,9 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "release": "changeset publish",
-    "update": "pnpm update -i -L -r"
+    "update": "pnpm update -i -L -r",
+    "predeploy": "pnpm build",
+    "deploy": "gh-pages -d docs"
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.0",
@@ -49,6 +51,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-simple-import-sort": "^12.1.0",
+    "gh-pages": "^6.3.0",
     "prettier": "^3.3.2",
     "typescript": "^5.4.5"
   },
