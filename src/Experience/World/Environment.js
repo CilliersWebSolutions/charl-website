@@ -27,8 +27,8 @@ export default class Environment {
             topLight.castShadow = true;
             topLight.shadow.mapSize.width = 4096;
             topLight.shadow.mapSize.height = 4096;
-            topLight.shadow.bias = -0.0005; // Negative bias to avoid shadow acne
-            topLight.shadow.normalBias = 0.05; // Slightly higher for soft contact
+            topLight.shadow.bias = 0.005; // Increased bias to prevent shadow leaking
+            topLight.shadow.normalBias = 0.2; // Higher normalBias for soft contact and less penetration
             topLight.shadow.radius = 60; // Increase for softer shadows
             // Make sure shadow camera covers the whole scene
             topLight.shadow.camera.left = -8;

@@ -105,7 +105,7 @@ export default class Lining {
             if (i === 2 || i === 3 || i === 7 || i === 8) {
                 mesh.visible = false;
                 mesh.castShadow = true;
-                mesh.receiveShadow = true;
+                mesh.receiveShadow = true; // Ensure all layers block shadows
             } else if (i === 1) {
                 // Layer 1: ensure shadow settings and material
                 mesh.visible = true;
@@ -218,6 +218,7 @@ export default class Lining {
                 // Only show shadow when opacity is above threshold
                 const shadowOpacityThreshold = 0.5;
                 mesh.castShadow = fade > shadowOpacityThreshold;
+                mesh.receiveShadow = true; // Always receive shadow to block penetration
             }
         }
 
