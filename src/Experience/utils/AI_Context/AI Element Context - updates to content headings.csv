@@ -1,0 +1,32 @@
+,,,,,,,
+MENU - in focus means 30vh from the top of the viewport. The item is positioned sticky in webflow with this to of 30vh too so they line up.,,,,,,,
+,,,,,,,
+menu id,Menu Type,Section text,class names,Attributes,Progress Bar Length(rem) when current menu has the .active class added to it.,Content that should be in focus(or come into focus) when current element is clicked,Menu item(menu index number) that should recieve the .active class when the current menu item is focused
+menu-item-0,main,Quality Assurance,.nav-link-content-wrapper,data-target=service-content-heading-1,3,id=service-content-1,"0, 1"
+menu-item-1,sub,Site Audits,.nav-link-content-wrapper,data-target=service-content-1,3,id=service-content-1,"0, 1"
+menu-item-2,sub,Design Review,.nav-link-content-wrapper,data-target=service-content-2,6,id=service-content-2,"0, 1, 2"
+menu-item-3,sub,Construction Support,.nav-link-content-wrapper,data-target=service-content-3,9,id=service-content-3,"0, 1, 2, 3"
+menu-item-4,main,Consulting,.nav-link-content-wrapper,data-target=service-content-heading-2,15,id=service-content-4,"0, 1, 2, 3, 4"
+menu-item-5,sub,Strategic Planning,.nav-link-content-wrapper,data-target=service-content-4,15,id=service-content-4,"0, 1, 2, 3, 4, 5"
+menu-item-6,sub,Technical Advisory,.nav-link-content-wrapper,data-target=service-content-5,18,id=service-content-5,"0, 1, 2, 3, 4, 5, 6"
+menu-item-7,sub,Stakeholder Engagement,.nav-link-content-wrapper,data-target=service-content-6,21,id=service-content-6,"0, 1, 2, 3, 4, 5, 6, 7"
+menu-item-8,main,Design,.nav-link-content-wrapper,data-target=service-content-heading-3,24,id=service-content-7,"0, 1, 2, 3, 4, 5, 6, 7, 8"
+menu-item-9,sub,Concept Development,.nav-link-content-wrapper,data-target=service-content-7,27,id=service-content-7,"0, 1, 2, 3, 4, 5, 6, 7, 8, 9"
+menu-item-10,sub,Engineering Detailing,.nav-link-content-wrapper,data-target=service-content-8,30,id=service-content-8,"0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10"
+menu-item-11,sub,Performance Modeling,.nav-link-content-wrapper,data-target=service-content-9,33,id=service-content-9,"0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11"
+,,,,,,,
+CONTENT - section info of content that rolls into place when the relative menu is clicked.,,,,,,,
+,,,,,,,
+Section ID,Section Title text,Section Classes,,Progress Bar Length(rem) when active,,,
+service-content-heading-1,Quality Assurance,services-card-heading-wrapper,,0,,,
+service-content-1,Site Audits,.services-card-wrapper,,3,,,
+service-content-2,Design Review,.services-card-wrapper,,6,,,
+service-content-3,Construction Support,.services-card-wrapper,,9,,,
+service-content-heading-2,Consulting,services-card-heading-wrapper,,12,,,
+service-content-4,Strategic Planning,.services-card-wrapper,,15,,,
+service-content-5,Technical Advisory,.services-card-wrapper,,18,,,
+service-content-6,Stakeholder Engagement,.services-card-wrapper,,21,,,
+service-content-heading-3,Design,services-card-heading-wrapper,,24,,,
+service-content-7,Concept Development,.services-card-wrapper,,27,,,
+service-content-8,Engineering Detailing,.services-card-wrapper,,30,,,
+service-content-9,Performance Modeling,.services-card-wrapper,,33,,,

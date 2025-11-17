@@ -1,0 +1,132 @@
+<style>
+/* ------------------- POINTER & MASK ------------------- */
+.quickfacts-fadedimage {
+  /* container positioned to fill the section; mask applies here */
+  position: absolute;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  width: 100%;
+  height: 100%;
+  /* mask built from individual vars for performant updates */
+  --mask-x: 50%;
+  --mask-y: 50%;
+  --mask-r: 0px;
+  -webkit-mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), #000 99%, transparent 100%);
+  mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), #000 99%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  z-index: 1; /* sits under stats (z-index:2) */
+  cursor: none;
+}
+.quickfacts-fadedimage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  z-index: 1;
+}
+.cw-mouse-circle {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--cw-pointer-size, 288px);
+  height: var(--cw-pointer-size, 288px);
+  border-radius: 50%;
+  border: 2px solid rgba(26,140,91,0.85);
+  background: rgba(26,140,91,0.06);
+  box-shadow: 0 8px 20px rgba(6,120,80,0.12);
+  z-index: 100;
+  pointer-events: none;
+  transform: translate(-50%,-50%) scale(0.95);
+  opacity: 0;
+  transition: opacity 160ms linear, background 180ms linear, box-shadow 180ms linear;
+  will-change: transform, opacity, left, top, background;
+}
+.cw-mouse-circle.cw-active {
+  opacity: 1;
+  transform: translate(-50%,-50%) scale(1);
+  background: rgba(26,140,91,0.12);
+  box-shadow: 0 12px 30px rgba(6,120,80,0.18);
+}
+.cw-mouse-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+}
+
+/* ------------------- SECTION LAYOUT ------------------- */
+.section-quickfacts {
+  position: relative;
+}
+.quickfacts-stats-wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+/* ------------------- PROGRESS BAR & MENU ------------------- */
+html { font-size: 1.125rem; }
+@media screen and (max-width:1920px) { html { font-size: calc(0.625rem + 0.41666666666666674vw); } }
+@media screen and (max-width:1440px) { html { font-size: calc(0.8126951092611863rem + 0.20811654526534862vw); } }
+@media screen and (max-width:479px) { html { font-size: calc(0.7494769874476988rem + 0.8368200836820083vw); } }
+
+.progress-bar {
+  width: 4px;
+  height: 0;
+  background: #1a8c5b;
+  border-radius: 2px;
+  z-index: 1;
+}
+.waypoint {
+  background: #fff;
+  border-color: #1a8c5b;
+  border: 2px solid rgba(26, 140, 91, 0.4);
+  z-index: 2;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.waypoint[data-type="main"] {
+  width: 0.77rem;
+  height: 0.77rem;
+  border-radius: 100rem;
+}
+.waypoint[data-type="sub"] {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 100rem;
+}
+.nav-link-content-wrapper.active .waypoint {
+  border-color: #1a8c5b;
+  background: var(--_color---bg);
+  box-shadow: 0 0 0 4px rgba(26, 140, 91, 0.15);
+  opacity: 1;
+}
+.nav-link-content-wrapper.currentActive {
+  border-radius: 6px;
+  color: var(--_color---bg);
+  background-color: #1a8c5b;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px -1px inset;
+}
+.nav-link-content-wrapper.currentActive .waypoint {
+  border-color: #045e37;
+}
+.waypoint.waiting:hover,
+.waypoint.waiting:focus {
+  border-color: #1a8c5b;
+  background: rgba(26, 140, 91, 0.1);
+  opacity: 1;
+  outline: none;
+}
+.progress-bar,
+.waypoint {
+  transition: all 0.28s cubic-bezier(.4,0,.2,1);
+}
+</style>

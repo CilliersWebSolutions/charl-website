@@ -22,7 +22,7 @@ export default class Environment {
     addThreePointLights() {
             // Top-down light, positioned at stone pour origin (min x, min z, above)
             const topLight = new THREE.DirectionalLight(0xffffff, 2);
-            topLight.position.set(1, 15, -10); // Northwest corner, above, aiming southeast
+            topLight.position.set(4, 6, 5); // Northwest corner, above, aiming southeast
             topLight.target.position.set(0, 0, 0);
             topLight.castShadow = true;
             topLight.shadow.mapSize.width = 4096;
@@ -40,9 +40,9 @@ export default class Environment {
             this.scene.add(topLight);
             this.scene.add(topLight.target);
 
-            // Add helper for top light
-            const topLightHelper = new THREE.DirectionalLightHelper(topLight, 2, 0xff0000);
-            this.scene.add(topLightHelper);
+            // // Add helper for top light
+            // const topLightHelper = new THREE.DirectionalLightHelper(topLight, 2, 0xff0000);
+            // this.scene.add(topLightHelper);
 
             // Ambient light for soft fill
             const ambientLight = new THREE.AmbientLight(0x888888, 8);

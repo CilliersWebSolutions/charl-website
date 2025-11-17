@@ -46,11 +46,11 @@ export default class Lining {
         duration: 1.0,         // seconds for full wave (configurable)
         heightAbove: 8.0,      // how high above to start for all layers
         layerStates: [],       // Animation state for each layer
-        groundFadeDuration: 0.5, // seconds for ground fade
+        groundFadeDuration: 0.3, // seconds for ground fade
     };
     constructor(experience) {
         // Multiplier for stone size (GUI adjustable)
-        this.stoneSizeMultiplier = 2;
+        this.stoneSizeMultiplier = 1.5;
         this.experience = experience;
         this.scene = this.experience.scene;
         this.resources = this.experience.resources;
@@ -330,13 +330,26 @@ export default class Lining {
                 return;
             }
             const center = mesh.position.clone();
-            const box = boxDefs[def.name];
+            // Apply a small inset to stone boxes so stones/ghosts don't protrude past main layers
+            const rawBox = boxDefs[def.name];
+            const shrinkFactor = 0.98; // 5% inset
+            const box = {
+                x: rawBox.x * shrinkFactor,
+                y: rawBox.y,
+                z: rawBox.z * shrinkFactor,
+                color: rawBox.color
+            };
 
             // Strict grid: fill box with stones, allow slight overlap and jitter, but never stick out past box bounds
-            const gridY = 4; // Number of vertical layers (rows)
-            const gridX = Math.ceil(box.x / (box.y / gridY));
-            const gridZ = Math.ceil(box.z / (box.y / gridY));
+            const gridY = 3; // Number of vertical layers (rows)
+            // Compute stone size based on the layer thickness (box.y) and desired rows
             const stoneSize = (box.y / gridY) * 0.98 * def.sizeScale * this.stoneSizeMultiplier;
+            // Compute horizontal grid counts from stoneSize so stones tile the box consistently
+            let gridX = Math.max(1, Math.floor(box.x / stoneSize));
+            let gridZ = Math.max(1, Math.floor(box.z / stoneSize));
+            // Ensure at least one column/row when box is smaller than stoneSize
+            if (gridX < 1) gridX = 1;
+            if (gridZ < 1) gridZ = 1;
             const planeGeo = new THREE.PlaneGeometry(stoneSize, stoneSize);
             // Use MeshStandardMaterial for shadow compatibility
             const mat = new THREE.MeshStandardMaterial({
@@ -362,24 +375,25 @@ export default class Lining {
             for (let iy = 0; iy < gridY; iy++) {
                 for (let ix = 0; ix < gridX; ix++) {
                     for (let iz = 0; iz < gridZ; iz++) {
-                        // Compute normalized [0,1] position in each axis
-                        const fx = ix / (gridX - 1);
-                        const fy = iy / (gridY - 1);
-                        const fz = iz / (gridZ - 1);
+                        // Compute normalized [0,1] position in each axis (safe for single-cell dims)
+                        const fx = gridX > 1 ? ix / (gridX - 1) : 0.5;
+                        const fy = gridY > 1 ? iy / (gridY - 1) : 0.5;
+                        const fz = gridZ > 1 ? iz / (gridZ - 1) : 0.5;
                         // Centered position in box
                         let px = center.x - box.x / 2 + fx * box.x;
                         let py = center.y - box.y / 2 + fy * box.y;
                         let pz = center.z - box.z / 2 + fz * box.z;
-                        // Jitter, but clamp so stone never sticks out past box
-                        const jitterMax = stoneSize * 0.25;
+                        // Jitter, but clamp so stone never sticks out past box bounds
+                        const jitterMax = stoneSize * 0.1;
                         const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
                         px += clamp((Math.random() - 0.5) * jitterMax, -(px - (center.x - box.x / 2)), (center.x + box.x / 2) - px);
                         py += clamp((Math.random() - 0.5) * jitterMax, -(py - (center.y - box.y / 2)), (center.y + box.y / 2) - py);
                         pz += clamp((Math.random() - 0.5) * jitterMax, -(pz - (center.z - box.z / 2)), (center.z + box.z / 2) - pz);
                         py = Math.min(py, center.y + box.y / 2 - stoneSize * 0.5);
-                        // Animation: delay based on distance from (ix=0, iz=gridZ-1) (anti-clockwise corner)
-                        const dist = Math.abs(ix) + Math.abs((gridZ - 1) - iz); // diamond pattern from min x, max z
-                        delays.push(dist);
+                        // Animation: assign a random per-instance delay to simulate rain-like falling
+                        // Delays are normalized later against maxDelay so keep in [0,1]
+                        const randDelay = Math.random();
+                        delays.push(randDelay);
                         finalPositions.push({x: px, y: py, z: pz});
                     }
                 }

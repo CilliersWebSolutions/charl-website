@@ -14,6 +14,6 @@ export default [
     {
         name: 'stoneTexture',
         type: 'texture',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/68d4ffb9cb60cddac9ea7e9d_stoneImprovedsizeSmaller.png'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/6915efce56769621ee31025b_stonedarkerGreen.png'
     }
 ];

@@ -5,7 +5,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Experience from "./Experience/Experience.js";
 import Counting from "./Experience/World/Counting.js";
+import ProgressBar from "./Experience/World/ProgressBar.js";
 
+import initMinimalPointer from "./Experience/World/minimalPointer.js";
 gsap.registerPlugin(ScrollTrigger);
 
 
@@ -15,8 +17,11 @@ window.Webflow ||= [];
 window.Webflow.push(() => {
   // Initialize counter animation for .number elements
   new Counting();
+  new ProgressBar();
+  // new MousePointer();
+  initMinimalPointer();
 });
-
+console.log(ProgressBar);
 document.addEventListener('DOMContentLoaded', () => {
   function initializeExperience(containers) {
     containers.forEach(container => {

@@ -1,0 +1,447 @@
+   
+   // Utility: check if element is fixed at top
+function isElementFixedAtTop(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return style.position === 'fixed' && Math.abs(rect.top) < 2;
+}
+   
+   
+   
+    setupScrollAndSectionSync() {
+        // On scroll, check which section is centered and update active index/bar
+        window.addEventListener('scroll', () => {
+            let found = false;
+            this.sections.forEach((section, i) => {
+                if (this.isSectionCentered(section) && !found) {
+                    found = true;
+                    if (this.activeSectionIndex !== i) {
+                        this.activeSectionIndex = i;
+                        this.updateProgressBar(i);
+                    }
+                }
+            });
+        });
+        // On load, sync to first visible section
+        window.addEventListener('DOMContentLoaded', () => {
+            let found = false;
+            this.sections.forEach((section, i) => {
+                if (this.isSectionCentered(section) && !found) {
+                    found = true;
+                    this.activeSectionIndex = i;
+                    this.updateProgressBar(i);
+                }
+            });
+        });
+    }
+    activeSectionIndex = 0;
+
+    isSectionCentered(section) {
+        const rect = section.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const viewportCenter = window.innerHeight / 2;
+    // Allow a larger threshold for floating point errors and tall sections
+    return Math.abs(sectionCenter - viewportCenter) < 100;
+    }
+    constructor() {
+        this.isAnimating = false;
+        this.isWheelEnabled = false;
+        this._wheelHandler = this.handleWheel.bind(this);
+        this.init();
+    }
+
+    // Wheel navigation only enabled when progress bar is fixed
+    setupFixedObserver() {
+        const bar = this.progressBar;
+        if (!bar) return;
+        this._fixedObserver = new window.IntersectionObserver(
+            ([entry]) => {
+                // If the bar is fully visible and at the top, assume fixed
+                if (entry.intersectionRatio === 1 && Math.abs(entry.boundingClientRect.top) < 2) {
+                    if (!this.isWheelEnabled) {
+                        this.isWheelEnabled = true;
+                        window.addEventListener('wheel', this._wheelHandler, { passive: false });
+                        console.log('[ProgressBar] Wheel navigation enabled');
+                    }
+                } else {
+                    if (this.isWheelEnabled) {
+                        this.isWheelEnabled = false;
+                        window.removeEventListener('wheel', this._wheelHandler);
+                        console.log('[ProgressBar] Wheel navigation disabled');
+                    }
+                }
+            },
+            { threshold: [1] }
+        );
+        this._fixedObserver.observe(bar);
+    }
+
+    handleWheel(e) {
+        if (!this.isWheelEnabled || this.isAnimating) return;
+        e.preventDefault();
+        // Find currently active menu index
+        const currentIndex = this.menuItems.findIndex(item => item.classList.contains('active'));
+        const direction = e.deltaY > 0 ? 1 : -1;
+        let nextIndex = currentIndex + direction;
+        nextIndex = Math.max(0, Math.min(this.menuItems.length - 1, nextIndex));
+        if (nextIndex === currentIndex) return;
+        // Simulate menu click for next section
+        this.menuItems[nextIndex].click();
+    }
+
+    init() {
+        this.progressBar = document.querySelector('.progress-bar');
+        this.waypoints = Array.from(document.querySelectorAll('.waypoint'));
+        this.sections = Array.from(document.querySelectorAll('.services-content-wrapper, .services-card-wrapper'))
+            .filter(el => el && el.id && el.offsetParent !== null);
+        this.menuItems = Array.from(document.querySelectorAll('.services-nav-main-link, .services-nav-secondary-link'));
+        this.contentContainer = document.querySelector('.services-container-wrapper');
+
+        // Debug logs
+        console.log('[ProgressBar] menuItems:', this.menuItems);
+        console.log('[ProgressBar] waypoints:', this.waypoints);
+        console.log('[ProgressBar] sections:', this.sections);
+        console.log('[ProgressBar] progressBar:', this.progressBar);
+
+        if (!this.progressBar) {
+            console.warn('[ProgressBar] .progress-bar not found');
+            return;
+        }
+        if (this.sections.length === 0) {
+            console.warn('[ProgressBar] No valid content sections found');
+            return;
+        }
+
+        this.setupMenuNavigation();
+        this.setInitialWaypointStates();
+        this.setupScrollAndSectionSync();
+        this.setupFixedObserver();
+        console.log('[ProgressBar] Initialization complete');
+    }
+
+    setupSectionObserver() {
+        // Use IntersectionObserver to track which section is in view
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5 // Section is considered in view if 50% visible
+        };
+        this.sectionObserver = new IntersectionObserver((entries) => {
+            let maxRatio = 0;
+            let activeIndex = 0;
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+                    maxRatio = entry.intersectionRatio;
+                    activeIndex = this.sections.indexOf(entry.target);
+                }
+            });
+            // Only update if a section is in view
+            if (maxRatio > 0) {
+                this.updateProgressBar(activeIndex);
+            }
+        }, options);
+        this.sections.forEach(section => {
+            this.sectionObserver.observe(section);
+        });
+    }
+
+    setupScrollTrigger() {
+        const firstSection = this.sections[0];
+        const lastSection = this.sections[this.sections.length - 1];
+        console.log('[ProgressBar] setupScrollTrigger: firstSection:', firstSection, 'lastSection:', lastSection);
+
+        if (!firstSection || !lastSection) {
+            console.warn('[ProgressBar] ScrollTrigger: firstSection or lastSection not found');
+            return;
+        }
+
+        if (!this.progressBar || !this.contentContainer) return;
+
+        // Track active section index
+        let activeSectionIndex = 0;
+
+        this.sections.forEach((section, i) => {
+            if (!section) {
+                console.warn(`[ProgressBar] ScrollTrigger: section[${i}] is undefined/null, skipping.`);
+                return;
+            }
+            ScrollTrigger.create({
+                trigger: section,
+                scroller: window,
+                start: 'top center',
+                end: 'bottom center',
+                onEnter: () => {
+                    if (this.isAnimating) return;
+                    activeSectionIndex = i;
+                    this.activateWaypoint(i);
+                    this.updateProgressBar(i);
+                },
+                onEnterBack: () => {
+                    if (this.isAnimating) return;
+                    activeSectionIndex = i;
+                    this.activateWaypoint(i);
+                    this.updateProgressBar(i);
+                }
+            });
+        });
+
+        // Initial state
+        this.updateProgressBar(0);
+    }
+
+    setInitialWaypointStates() {
+        // Set initial progress bar height to 3rem
+        if (this.progressBar) {
+            this.progressBar.style.height = '3rem';
+        }
+        // Do not change .active classes if already set in HTML
+        // Only ensure first main and first subheading are active if not already
+        if (this.waypoints[0] && !this.waypoints[0].classList.contains('active')) this.waypoints[0].classList.add('active');
+        if (this.menuItems[0] && !this.menuItems[0].classList.contains('active')) this.menuItems[0].classList.add('active');
+        if (this.waypoints[1] && !this.waypoints[1].classList.contains('active')) this.waypoints[1].classList.add('active');
+        if (this.menuItems[1] && !this.menuItems[1].classList.contains('active')) this.menuItems[1].classList.add('active');
+        if (this.sections[0] && !this.sections[0].classList.contains('active')) this.sections[0].classList.add('active');
+    }
+
+    updateProgressBar(activeIndex) {
+        // Calculate height based on main/sub transitions
+        // Only update if bar is fixed at top
+        if (!isElementFixedAtTop(this.progressBar)) return;
+        let height = 3; // Start at 3rem
+        for (let i = 0; i <= activeIndex; i++) {
+            if (i === 0) continue; // skip the first (already at 3rem)
+            const isMain = this.menuItems[i] && this.menuItems[i].classList.contains('services-nav-main-link');
+            if (isMain) {
+                height += 6;
+            } else {
+                height += 3;
+            }
+        }
+        if (this.progressBar) {
+            this.progressBar.style.height = height + 'rem';
+        }
+        // Update waypoint/menu states
+        this.waypoints.forEach((waypoint, i) => {
+            if (i <= activeIndex) {
+                waypoint.classList.add('active');
+                waypoint.classList.remove('waiting');
+                gsap.to(waypoint, { backgroundColor: '#1a8c5b', borderColor: '#1a8c5b', borderRadius: '100rem', duration: 0.5 });
+            } else {
+                waypoint.classList.remove('active');
+                waypoint.classList.add('waiting');
+                gsap.to(waypoint, { backgroundColor: '#fff', borderColor: 'rgba(26, 140, 91, 0.4)', borderRadius: '100rem', duration: 0.5 });
+            }
+        });
+        this.menuItems.forEach((item, i) => {
+            if (i <= activeIndex) {
+                item.classList.add('active');
+                item.classList.remove('waiting');
+            } else {
+                item.classList.remove('active');
+                item.classList.add('waiting');
+            }
+        });
+    }
+
+    activateWaypoint(index) {
+        // Only the current waypoint/menu is active, previous are completed
+        this.updateProgressBar(index);
+    }
+
+    setupMenuNavigation() {
+        this.isAnimating = false;
+        this.menuItems.forEach((item, i) => {
+            item.addEventListener('click', e => {
+                e.preventDefault();
+                if (this.isAnimating) return;
+                const targetId = item.getAttribute('data-target');
+                // Find section by id from this.sections array
+                const targetSection = this.sections.find(section => section.id === targetId);
+                if (targetSection) {
+                    // Calculate scroll position to center section in viewport
+                    const sectionRect = targetSection.getBoundingClientRect();
+                    const scrollY = window.scrollY + sectionRect.top - (window.innerHeight / 2) + (sectionRect.height / 2);
+                    console.log(`[ProgressBar] Scrolling window to section ${targetId} at Y:`, scrollY);
+                    this.isAnimating = true;
+                    gsap.to(window, {
+                        duration: 1.2,
+                        ease: 'power2.inOut',
+                        scrollTo: { y: scrollY, autoKill: false },
+                        onComplete: () => {
+                            this.isAnimating = false;
+                            this.activeSectionIndex = i;
+                            this.updateProgressBar(i);
+                        }
+                    });
+                } else {
+                    console.warn('[ProgressBar] Target section not found for id:', targetId);
+                }
+            });
+        });
+    }
+
+
+
+
+
+    back up 2
+    		this.progressBar = document.querySelector('.progress-bar');
+		this.waypoints = Array.from(document.querySelectorAll('.waypoint'));
+		// Menu parents now use .nav-link-content-wrapper which contains the waypoint and link text
+		this.menuItems = Array.from(document.querySelectorAll('.nav-link-content-wrapper'));
+		// Content sections use service-content-* ids with classes like services-content-wrapper and services-card-wrapper
+		this.sections = Array.from(document.querySelectorAll('.services-content-wrapper, .services-card-wrapper'));
+
+		// Parse CSV logic for mapping (hardcoded for now, can be loaded from CSV)
+		// Updated to match new 'service-content-*' ids from AI Element Context CSV
+		this.menuMap = [
+			{ menuIdx: 0, contentIds: ['service-content-1'], progressBarLength: '3', menuActiveIds: ['id=service-content-1'] },
+			{ menuIdx: 1, contentIds: ['service-content-1'], progressBarLength: '3', menuActiveIds: ['id=service-content-1'] },
+			{ menuIdx: 2, contentIds: ['service-content-2'], progressBarLength: '6', menuActiveIds: ['id=service-content-1', 'id=service-content-2'] },
+			{ menuIdx: 3, contentIds: ['service-content-3'], progressBarLength: '9', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3'] },
+			{ menuIdx: 4, contentIds: ['service-content-4'], progressBarLength: '15', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4'] },
+			{ menuIdx: 5, contentIds: ['service-content-4'], progressBarLength: '15', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4'] },
+			{ menuIdx: 6, contentIds: ['service-content-5'], progressBarLength: '18', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5'] },
+			{ menuIdx: 7, contentIds: ['service-content-6'], progressBarLength: '21', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5', 'id=service-content-6'] },
+			{ menuIdx: 8, contentIds: ['service-content-7'], progressBarLength: '27', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5', 'id=service-content-6', 'id=service-content-7'] },
+			{ menuIdx: 9, contentIds: ['service-content-7'], progressBarLength: '30', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5', 'id=service-content-6', 'id=service-content-7'] },
+			{ menuIdx: 10, contentIds: ['service-content-8'], progressBarLength: '33', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5', 'id=service-content-6', 'id=service-content-7', 'id=service-content-8'] },
+			{ menuIdx: 11, contentIds: ['service-content-9'], progressBarLength: '36', menuActiveIds: ['id=service-content-1', 'id=service-content-2', 'id=service-content-3', 'id=service-content-4', 'id=service-content-5', 'id=service-content-6', 'id=service-content-7', 'id=service-content-8', 'id=service-content-9'] },
+		];
+
+		this.init();
+	}
+
+	init() {
+		// Set initial state and prepare debounce/state tracking
+		this.lastActiveMenuIdx = -1;
+		this.observerDebounceTimeout = null;
+		this.setActiveMenuAndBar(0, { source: 'init' });
+		this.setupMenuNavigation();
+		this.setupSectionObserver();
+	}
+
+	setActiveMenuAndBar(menuIdx, opts = { source: 'observer' }) {
+		const source = opts.source || 'observer';
+		// Clamp menuIdx
+		if (menuIdx < 0) menuIdx = 0;
+		if (menuIdx >= this.menuItems.length) menuIdx = this.menuItems.length - 1;
+		// Avoid redundant updates
+		if (this.lastActiveMenuIdx === menuIdx && source !== 'init') return;
+		this.lastActiveMenuIdx = menuIdx;
+
+		// Helpers
+		const activateMenuParents = () => {
+			this.menuItems.forEach((mi, idx) => {
+				if (idx <= menuIdx) mi.classList.add('active'); else mi.classList.remove('active');
+			});
+		};
+
+		const activateWaypoints = () => {
+			this.waypoints.forEach((wp, idx) => {
+				if (idx <= menuIdx) wp.classList.add('active'); else wp.classList.remove('active');
+			});
+		};
+
+		// Use different behavior for user-scrolled (observer) vs programmatic (click)
+		if (source === 'observer' || source === 'init') {
+			// Immediate visual update, then softly animate bar to avoid jumpiness
+			activateMenuParents();
+			activateWaypoints();
+			if (this.progressBar) {
+				const lengthRem = (this.menuMap[menuIdx] && this.menuMap[menuIdx].progressBarLength) || this.menuItems[menuIdx]?.getAttribute('data-progress') || '3';
+				gsap.killTweensOf(this.progressBar);
+				gsap.to(this.progressBar, { height: `${lengthRem}rem`, duration: 0.35, ease: 'power2.out' });
+			}
+			return;
+		} else {
+			// Programmatic: keep sequential bar -> waypoints
+			activateMenuParents();
+			if (this.progressBar) {
+				const lengthRem = (this.menuMap[menuIdx] && this.menuMap[menuIdx].progressBarLength) || this.menuItems[menuIdx]?.getAttribute('data-progress') || '3';
+				gsap.killTweensOf(this.progressBar);
+				gsap.to(this.progressBar, {
+					height: `${lengthRem}rem`,
+					duration: 0.45,
+					ease: 'power2.inOut',
+					onComplete: () => {
+						activateWaypoints();
+					}
+				});
+			} else {
+				activateWaypoints();
+			}
+		}
+	}
+
+	setupMenuNavigation() {
+		// Debounce observer after menu click
+		this.observerPaused = false;
+		this.menuItems.forEach((item, i) => {
+			item.addEventListener('click', e => {
+				e.preventDefault();
+				this.observerPaused = true;
+				// Use data-target on the nav parent to find the content section
+				const targetId = item.getAttribute('data-target');
+				const targetSection = this.sections.find(section => section.id === targetId);
+				if (targetSection) {
+					const offset = window.innerHeight * 0.3;
+					const sectionRect = targetSection.getBoundingClientRect();
+					const scrollY = window.scrollY + sectionRect.top - offset;
+					// Scroll then activate
+					gsap.to(window, {
+						duration: 1,
+						ease: 'power2.inOut',
+						scrollTo: { y: scrollY, autoKill: false },
+						onComplete: () => {
+							this.setActiveMenuAndBar(i);
+							setTimeout(() => { this.observerPaused = false; }, 400); // Re-enable observer after animation
+						}
+					});
+				} else {
+					this.setActiveMenuAndBar(i);
+					setTimeout(() => { this.observerPaused = false; }, 400);
+				}
+			});
+		});
+	}
+
+	setupSectionObserver() {
+
+		const targetY = window.innerHeight * 0.3;
+		const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+		const tolerance = remPx * 50; // 50rem in px
+		const observer = new window.IntersectionObserver((entries) => {
+			if (this.observerPaused) return;
+			// Find all intersecting sections and pick the one closest to targetY (prefer the lowest one in view)
+			let bestIdx = -1;
+			let bestTop = -Infinity;
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					const rect = entry.target.getBoundingClientRect();
+					// Only consider sections above or near targetY
+					if (rect.top <= targetY + tolerance && rect.top > bestTop) {
+						bestTop = rect.top;
+						bestIdx = this.sections.indexOf(entry.target);
+					}
+				}
+			});
+			if (bestIdx !== -1) {
+				const sectionId = this.sections[bestIdx].id;
+				// Find the menu item whose data-target matches this section id
+				let menuIdx = this.menuItems.findIndex(mi => mi.getAttribute('data-target') === sectionId);
+				// Fallback: try to find by matching contentIds in menuMap (legacy)
+				if (menuIdx < 0) {
+					menuIdx = this.menuMap.findIndex(m => m.contentIds && m.contentIds.includes(sectionId));
+				}
+				// Clamp menuIdx to valid range
+				if (menuIdx < 0) menuIdx = 0;
+				if (menuIdx >= this.menuItems.length) menuIdx = this.menuItems.length - 1;
+				this.setActiveMenuAndBar(menuIdx);
+			}
+		}, {
+			threshold: [0.1, 0.5, 1]
+		});
+		this.sections.forEach(section => observer.observe(section));
+	}
