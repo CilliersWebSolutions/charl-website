@@ -45,8 +45,8 @@ export default function initMinimalPointer() {
 
     // compute scale (pointer size will be baseSize * scale)
     const scale = Math.max(0.001, currentRadius / targetRadius);
-    // update pointer transform to follow last mouse (GPU-accelerated)
-    pointer.style.transform = `translate3d(${lastMouse.x}px, ${lastMouse.y}px, 0) translate(-50%,-50%) scale(${scale})`;
+    // update pointer scale via CSS var; position is updated on mousemove for immediate response
+    pointer.style.setProperty('--cw-scale', String(scale));
 
     // update mask radius; position (x/y) is updated on mousemove/scroll for responsiveness
     const rect = latestRect || faded.getBoundingClientRect();
@@ -81,7 +81,10 @@ export default function initMinimalPointer() {
   pointer.style.width = `${baseSize}px`;
   pointer.style.height = `${baseSize}px`;
   pointer.style.display = 'none';
-  pointer.style.transform = `translate3d(-9999px,-9999px,0) translate(-50%,-50%) scale(0.001)`;
+  // ensure CSS vars start off-screen and at minimal scale
+  pointer.style.setProperty('--cw-x', '-9999px');
+  pointer.style.setProperty('--cw-y', '-9999px');
+  pointer.style.setProperty('--cw-scale', '0.001');
 
   // track latest faded rect for alignment; update on resize/scroll/mousemove
   let latestRect = faded.getBoundingClientRect();
@@ -121,8 +124,11 @@ export default function initMinimalPointer() {
         pointer.classList.add('cw-active');
         startAnimate(targetRadius);
       }
-      // update pointer position (transform) immediately for responsiveness
-      pointer.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%,-50%) scale(${Math.max(0.001, currentRadius / targetRadius)})`;
+      // update pointer position immediately via CSS vars (GPU)
+      pointer.style.setProperty('--cw-x', `${e.clientX}px`);
+      pointer.style.setProperty('--cw-y', `${e.clientY}px`);
+      // also update scale var for immediate visual feedback
+      pointer.style.setProperty('--cw-scale', String(Math.max(0.001, currentRadius / targetRadius)));
 
       // update mask position vars immediately
       const relX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));

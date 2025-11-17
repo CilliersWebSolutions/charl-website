@@ -38,14 +38,14 @@
   box-shadow: 0 8px 20px rgba(6,120,80,0.12);
   z-index: 100;
   pointer-events: none;
-  transform: translate(-50%,-50%) scale(0.95);
+  /* position & scale controlled via CSS vars set from JS for performance */
+  transform: translate3d(var(--cw-x, -9999px), var(--cw-y, -9999px), 0) translate(-50%,-50%) scale(var(--cw-scale, 0.001));
   opacity: 0;
   transition: opacity 160ms linear, background 180ms linear, box-shadow 180ms linear;
-  will-change: transform, opacity, left, top, background;
+  will-change: transform, opacity, background;
 }
 .cw-mouse-circle.cw-active {
   opacity: 1;
-  transform: translate(-50%,-50%) scale(1);
   background: rgba(26,140,91,0.12);
   box-shadow: 0 12px 30px rgba(6,120,80,0.18);
 }
