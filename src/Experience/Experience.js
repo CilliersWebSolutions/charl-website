@@ -6,7 +6,6 @@ import Renderer from './Renderer.js'
 import World from './World/World.js'
 import Resources from './utils/Resources.js'
 import sources from './sources.js'
-//import MousePointer from './World/MousePointer.js'
 
 export default class Experience {
     constructor(canvas, container) {
@@ -28,12 +27,7 @@ export default class Experience {
 
         this.world = new World(this, container)
 
-        // // Optional UI effect: masked schematic reveal in the Quick Facts section
-        // try {
-        //     this.mousePointer = new MousePointer();
-        // } catch (e) {
-        //     // non-fatal
-        // }
+        // Optional UI effect is now handled by `initMinimalPointer` in the site entry.
 
         // Sizes resize event
         this.sizes.on('resize', () => {

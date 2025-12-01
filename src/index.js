@@ -18,7 +18,6 @@ window.Webflow.push(() => {
   // Initialize counter animation for .number elements
   new Counting();
   new ProgressBar();
-  // new MousePointer();
   initMinimalPointer();
 });
 console.log(ProgressBar);

@@ -14,6 +14,27 @@ export default class ProgressBar {
   this.bottomVH = 0.5; // 50vh
     this.observerDebounceMs = 80;
 
+  // compute a pixel-based top offset to match sticky navigation (e.g. 12rem)
+  // prefer reading the computed `top` from the sticky nav element if present;
+  // otherwise fall back to using a fraction of the viewport height (`topVH`).
+  this._computeTopOffset = () => {
+    const stickyEl = document.querySelector('.services-nav-wrapper');
+    if (stickyEl) {
+      try {
+        const cs = window.getComputedStyle(stickyEl);
+        // computed top is typically returned in pixels (e.g. '192px')
+        const topPx = parseFloat(cs.top);
+        if (Number.isFinite(topPx) && topPx >= 0) return topPx;
+      } catch (e) {
+        // ignore and fallback
+      }
+    }
+    return window.innerHeight * this.topVH;
+  };
+  // initial pixel offsets
+  this._topOffsetPx = this._computeTopOffset();
+  this._bottomOffsetPx = window.innerHeight * (1 - this.bottomVH);
+
   // state
   this.programmaticScroll = false;
   this.lastMenuIdx = -1;
@@ -34,6 +55,17 @@ export default class ProgressBar {
 
     this._bind();
     this._init();
+    // Recompute offsets and recreate observer on resize to remain in sync with CSS (responsive)
+    window.addEventListener('resize', () => {
+      this._topOffsetPx = this._computeTopOffset();
+      this._bottomOffsetPx = window.innerHeight * (1 - this.bottomVH);
+      if (this.observer) {
+        try { this.observer.disconnect(); } catch (e) {}
+        this.observer = new IntersectionObserver(this.onIntersect, { root: null, rootMargin: `-${this._topOffsetPx}px 0px -${this._bottomOffsetPx}px 0px`, threshold: [0, 0.01, 0.5, 1] });
+        // re-observe sections
+        this.sections.forEach(s => this.observer.observe(s));
+      }
+    });
   }
 
   // Apply active classes (menu parents and waypoints) up to menuIdx
@@ -113,11 +145,8 @@ export default class ProgressBar {
     // attach listeners
     this.menuItems.forEach((mi, i) => mi.addEventListener('click', (e) => this.onMenuClick(e, i)));
 
-    // IntersectionObserver with loose rootMargin so we can compute 30vh..50vh window
-    // rootMargin must be in px or percent — use percent here (convert fractions to %)
-    const topPercent = this.topVH * 100; // e.g. 30
-    const bottomPercent = (1 - this.bottomVH) * 100; // e.g. 50 -> (1 - 0.5)*100 = 50
-    const rootMargin = `-${topPercent}% 0% -${bottomPercent}% 0%`;
+    // IntersectionObserver with rootMargin computed from the sticky menu top offset (px)
+    const rootMargin = `-${this._topOffsetPx}px 0px -${this._bottomOffsetPx}px 0px`;
     this.observer = new IntersectionObserver(this.onIntersect, { root: null, rootMargin, threshold: [0, 0.01, 0.5, 1] });
 
     // Delay starting observation briefly so initial active state is visible and not immediately overridden
@@ -146,7 +175,8 @@ export default class ProgressBar {
     const targetSection = this.sections.find(s => s.id === targetId);
     if (!targetSection) return this.updateStateByIndex(idx, { source: 'click' });
 
-    const offset = window.innerHeight * this.topVH;
+    // Use pixel offset derived from the sticky nav (e.g. 12rem -> computed px)
+    const offset = this._computeTopOffset();
     const rect = targetSection.getBoundingClientRect();
     const scrollToY = window.scrollY + rect.top - offset;
 
@@ -174,7 +204,8 @@ export default class ProgressBar {
     clearTimeout(this._debounceTimer);
     this._debounceTimer = setTimeout(() => {
       // find the section that is inside the sticky window (30vh..50vh) by checking bounding rect
-      const targetTop = window.innerHeight * this.topVH;
+      // Use pixel-based targetTop (sticky nav top) to find which section lines up under the menu
+      const targetTop = this._topOffsetPx;
       const targetBottom = window.innerHeight * this.bottomVH;
       // find all sections whose center lies within the target window, pick the one closest to the midpoint
       const inWindow = [];

@@ -25,12 +25,27 @@ export default function initMinimalPointer() {
   let lastMouse = { x: 50, y: 50 };
   let leaveTimeout = null;
   let leaveSequence = 0;
+  // keep last valid mask values to avoid writing invalid CSS vars
+  let lastValidMask = { x: 0, y: 0, r: 0 };
+  const debug = false;
 
   // set mask variables (x,y in px relative to faded box, r in px)
   function setMaskVars(x, y, r) {
-    faded.style.setProperty('--mask-x', `${x}px`);
-    faded.style.setProperty('--mask-y', `${y}px`);
-    faded.style.setProperty('--mask-r', `${r}px`);
+    // Validate inputs — if any value is not finite, reuse the last valid value
+    const vx = Number.isFinite(x) ? x : lastValidMask.x;
+    const vy = Number.isFinite(y) ? y : lastValidMask.y;
+    const vr = Number.isFinite(r) ? Math.max(0, r) : lastValidMask.r;
+    // Avoid setting NaN/Infinity into CSS which can invalidate the entire mask-image
+    faded.style.setProperty('--mask-x', `${vx}px`);
+    faded.style.setProperty('--mask-y', `${vy}px`);
+    faded.style.setProperty('--mask-r', `${vr}px`);
+    lastValidMask.x = vx;
+    lastValidMask.y = vy;
+    lastValidMask.r = vr;
+    if (debug && (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r))) {
+      // eslint-disable-next-line no-console
+      console.debug('[minimalPointer] dropped invalid mask value', { x, y, r, used: { vx, vy, vr } });
+    }
   }
 
   // easing (easeOutCubic)
@@ -47,6 +62,11 @@ export default function initMinimalPointer() {
     const scale = Math.max(0.001, currentRadius / targetRadius);
     // update pointer scale via CSS var; position is updated on mousemove for immediate response
     pointer.style.setProperty('--cw-scale', String(scale));
+
+    // keep pointer position in sync while radius animates (covers cases where
+    // mousemove RAFs aren't scheduled during the animation). Use viewport coords.
+    pointer.style.setProperty('--cw-x', `${lastMouse.x}px`);
+    pointer.style.setProperty('--cw-y', `${lastMouse.y}px`);
 
     // update mask radius; position (x/y) is updated on mousemove/scroll for responsiveness
     const rect = latestRect || faded.getBoundingClientRect();
@@ -101,14 +121,36 @@ export default function initMinimalPointer() {
       const safeY = Number.isFinite(relY) ? relY : 0;
       faded.style.setProperty('--mask-x', `${safeX}px`);
       faded.style.setProperty('--mask-y', `${safeY}px`);
-      pointer.style.transform = `translate3d(${lastMouse.x}px, ${lastMouse.y}px, 0) translate(-50%,-50%) scale(${Math.max(0.001, currentRadius / targetRadius)})`;
+      // keep transform updates consistent by using the same CSS-vars-driven transform
+      pointer.style.setProperty('--cw-x', `${lastMouse.x}px`);
+      pointer.style.setProperty('--cw-y', `${lastMouse.y}px`);
+      pointer.style.setProperty('--cw-scale', String(Math.max(0.001, currentRadius / targetRadius)));
     }
   }, { passive: true });
+
+  // Batch high-frequency pointer/mask writes in a single RAF to avoid
+  // inconsistencies between the pointer element and the mask element.
+  let rafScheduled = false;
+  function renderFrame() {
+    rafScheduled = false;
+    // refresh geometry once per RAF to avoid stale bounding rects
+    updateRect();
+    const rect = latestRect;
+    // update pointer position (viewport coords) and mask position (relative coords)
+    pointer.style.setProperty('--cw-x', `${lastMouse.x}px`);
+    pointer.style.setProperty('--cw-y', `${lastMouse.y}px`);
+    pointer.style.setProperty('--cw-scale', String(Math.max(0.001, currentRadius / targetRadius)));
+    const relX = Math.max(0, Math.min(rect.width, lastMouse.x - rect.left));
+    const relY = Math.max(0, Math.min(rect.height, lastMouse.y - rect.top));
+    const safeX = Number.isFinite(relX) ? relX : 0;
+    const safeY = Number.isFinite(relY) ? relY : 0;
+    faded.style.setProperty('--mask-x', `${safeX}px`);
+    faded.style.setProperty('--mask-y', `${safeY}px`);
+  }
 
   document.addEventListener('mousemove', e => {
     lastMouse.x = e.clientX;
     lastMouse.y = e.clientY;
-    latestRect = faded.getBoundingClientRect();
     const rect = latestRect;
     const inside = (
       e.clientX >= rect.left && e.clientX <= rect.right &&
@@ -122,21 +164,15 @@ export default function initMinimalPointer() {
         active = true;
         pointer.style.display = 'block';
         pointer.classList.add('cw-active');
+        // refresh element rect on enter to avoid stale geometry
+        updateRect();
         startAnimate(targetRadius);
       }
-      // update pointer position immediately via CSS vars (GPU)
-      pointer.style.setProperty('--cw-x', `${e.clientX}px`);
-      pointer.style.setProperty('--cw-y', `${e.clientY}px`);
-      // also update scale var for immediate visual feedback
-      pointer.style.setProperty('--cw-scale', String(Math.max(0.001, currentRadius / targetRadius)));
-
-      // update mask position vars immediately
-      const relX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
-      const relY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
-      const safeX = Number.isFinite(relX) ? relX : 0;
-      const safeY = Number.isFinite(relY) ? relY : 0;
-      faded.style.setProperty('--mask-x', `${safeX}px`);
-      faded.style.setProperty('--mask-y', `${safeY}px`);
+      // schedule a batched render so pointer and mask update together
+      if (!rafScheduled) {
+        rafScheduled = true;
+        requestAnimationFrame(renderFrame);
+      }
     } else if (active) {
       // Debounce small, quick exits to avoid accidental mask resets
       if (leaveTimeout) clearTimeout(leaveTimeout);
