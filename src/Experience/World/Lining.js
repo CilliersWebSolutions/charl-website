@@ -297,7 +297,7 @@ export default class Lining {
                 if (prog < start) {
                     // Not started yet
                     y = finalPos.y + this.stoneAnimation.heightAbove;
-                    console.log("check state ok")
+             
                     if (instancedMesh._lastY?.[i] !== y) needsUpdate = true;
                 } else if (prog >= end || prog >= 1.0) {
                     // Finished
