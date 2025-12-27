@@ -68,10 +68,10 @@ export default class Lining {
         startTime: null,
         perInstanceDelays: [], // Array of arrays, one per layer
         finalPositions: [],    // Array of arrays, one per layer
-        duration: 2.0,         // seconds for full wave (configurable)
+        duration: 0.33,         // seconds for full wave (configurable)
         heightAbove: 8.0,      // how high above to start for all layers
         layerStates: [],       // Animation state for each layer
-        groundFadeDuration: 0.3, // seconds for ground fade
+        groundFadeDuration: 0.33, // seconds for ground fade
     };
     constructor(experience) {
         // Multiplier for stone size (GUI adjustable)
@@ -332,6 +332,10 @@ export default class Lining {
             // are explicitly set to their final positions to avoid any remaining
             // visual mismatch or missed updates. This also enforces final opacity.
             if (parentState.progress >= 1.0) {
+                // Avoid repeating finalization every frame — finalize once per instanced mesh
+                if (instancedMesh.userData && instancedMesh.userData._finalized) {
+                    // Already finalized for this mesh
+                } else {
                 const finalsLen = finals.length;
                 // safety: if counts mismatch, log debug info
                 if (instancedMesh.count !== finalsLen) {
@@ -382,6 +386,10 @@ export default class Lining {
                 }
                 // clear lastY cache to free memory
                 instancedMesh._lastY = null;
+                // mark finalized so we don't re-run this costly block each frame
+                if (!instancedMesh.userData) instancedMesh.userData = {};
+                instancedMesh.userData._finalized = true;
+                }
             }
         }
     }

@@ -1,71 +1,43 @@
-# Charl Website - AI Agent Instructions
+# Charl Website — Copilot AI Instructions
 
-## Project Overview
-This is a Three.js-powered website built with a modular Experience architecture for 3D visualizations. The project uses esbuild for bundling, GSAP for animations, and loads 3D models into Webflow-based pages.
+Purpose: concise, actionable guidance to make an AI coding agent productive in this Three.js-based site.
 
-## Architecture Patterns
+Big picture
+- Small, modular Three.js "Experience" system. `src/index.js` finds DOM containers (data-3d) and boots an `Experience` instance per container.
+- `src/Experience/Experience.js` composes Scene, Camera, Renderer, World, Time and Resources; World components (e.g., `World/World.js`, `World/Lining.js`) are instantiated after Resources finish loading.
 
-### Experience System
-- **Entry Point**: `src/index.js` initializes Experience instances for elements with `data-3d` attributes
-- **Core Class**: `src/Experience/Experience.js` orchestrates Scene, Camera, Renderer, World, and Resources
-- **World Factory**: `src/Experience/World/World.js` creates different 3D scenes based on `data-3d` attribute values
-- **Event-Driven**: Uses custom `EventEmitter.js` for resize/tick events across components
+Key files & locations
+- Entry: `src/index.js` — discovers containers and creates Experiences.
+- Core wiring: `src/Experience/Experience.js`, `src/Experience/Renderer.js`, `src/Experience/Camera.js`.
+- World: `src/Experience/World/World.js`, `src/Experience/World/Lining.js`, `src/Experience/World/ProgressBar.js`.
+- Utilities: `src/Experience/utils/Resources.js`, `Sizes.js`, `Time.js`, `EventEmitter.js`.
+- Asset sources: `src/Experience/sources.js` (Webflow URLs, `.glb.txt` usage).
+- Shaders: `src/Experience/utils/shaders/*.glsl` (loaded as text via esbuild).
+- Build scripts / dev server: `bin/build-dev.js`, `bin/build-prod.js`.
 
-### Data Flow
-1. DOM element with `data-3d="lining"` triggers Experience creation
-2. Resources load from `sources.js` (external CDN URLs for models/textures)
-3. World class conditionally instantiates scene components (e.g., `Lining.js`)
-4. Update loop: Time → Camera → World → Renderer
+Developer workflows
+- Development: `pnpm dev` — runs `bin/build-dev.js` (esbuild watch + express dev server). Default dev port: 3000.
+- Production build: `pnpm build` — runs `bin/build-prod.js`, outputs static site into `docs/`.
+- Tests: `pnpm test` — Playwright tests; the test suite expects the dev server (port 3000) to be available. The test runner does not automatically start the dev server.
+- Packaging: `pnpm deploy` publishes `docs/` via `gh-pages` (see `package.json` scripts).
 
-### Key Components
-- **Sizes.js**: Responsive canvas sizing with container-based dimensions
-- **Time.js**: RAF-based animation loop with delta time
-- **Resources.js**: Async loading of GLTF models and textures
-- **Camera.js**: Three.js camera management with container context
-- **Renderer.js**: WebGL renderer setup with shadows and tone mapping
+Project-specific conventions & patterns
+- Container-scoped Experiences: don't assume a single global canvas — canvases and sizes are per-container (see `Sizes.js`).
+- Resource-first instantiation: always wait for `Resources` loader to finish before creating World components.
+- Global update flow: `Time` emits ticks → update camera → update world children → renderer renders each frame.
+- Geometry refresh pattern: use `refreshLayers()` (used in `Lining.js`) and explicitly dispose old geometries/materials/textures to avoid memory leaks.
+- Shaders and asset loading: shaders are kept as `.glsl` and must be treated as text by bundling; external assets often come from Webflow and may use `.glb.txt` wrappers.
+- Texture settings: ensure `texture.flipY = false` and `texture.colorSpace = SRGBColorSpace` when processing textures.
 
-## Development Workflow
+Integration points & external deps
+- Three.js for rendering (`three` in `package.json`).
+- Swiper for slides in UI (`swiper`). Overrides live at `src/styles/swiper-overrides.css`.
+- Draco helper files in `draco/` for GLTF decoding.
+- Dev server uses `express` inside `bin/build-dev.js` — that script also sets headers/CORS used by tests.
 
-### Build System
-- **Dev**: `pnpm dev` → esbuild watch + Express server on port 3000 with live reload
-- **Prod**: `pnpm build` → minified bundle to `docs/` directory
-- **GLSL Loader**: `.glsl` files loaded as text via esbuild config in both build scripts
+Debugging and common fixes
+- If assets fail to load, inspect `src/Experience/sources.js` for CDN URLs and `bin/build-dev.js` for CORS. Playwright tests break if CORS or port mismatches occur.
+- To reproduce UI/render issues: run `pnpm dev`, open browser console and network, and verify shaders are loaded as text and GLTF URLs resolve.
+- When changing geometry or textures, run a local session and check memory snapshots or watch for console warnings about disposed resources.
 
-### Testing
-- **Playwright**: Cross-browser testing with `pnpm test`
-- **Dev Server**: Tests run against local dev server on port 3000
-
-### Key Files
-- **Build Scripts**: `bin/build-dev.js` (live reload + CORS) and `bin/build-prod.js`
-- **Entry**: `src/index.js` handles Webflow integration and Experience initialization
-- **Sources**: `src/Experience/sources.js` defines external asset URLs
-
-## Project-Specific Conventions
-
-### Asset Loading
-- Models and textures loaded from Webflow CDN URLs (see `sources.js`)
-- Use `.glb.txt` extension for GLTF models (Webflow hosting requirement)
-- Textures require `flipY = false` and `SRGBColorSpace` encoding
-
-### Three.js Patterns
-- Instanced meshes for performance (see `Lining.js` stone generation)
-- Material opacity and transparency for layered effects
-- Shadow casting/receiving enabled on most meshes
-- World position calculations for accurate placement
-
-### GUI Integration
-- `lil-gui` for runtime parameter tweaking (dev only)
-- Parameters stored as class properties for easy GUI binding
-- `refreshLayers()` pattern for real-time scene updates
-
-### Memory Management
-- Clear previous meshes before regenerating (`refreshLayers()` in `Lining.js`)
-- Dispose contexts after production builds
-- Remove event listeners on component destruction
-
-## Common Gotchas
-- Canvas elements are dynamically created and appended to containers
-- Container attributes determine which 3D scene loads
-- Resources must be loaded before World instantiation
-- esbuild requires explicit `.glsl` text loader configuration
-- Express dev server needs CORS headers for local development
+If any section needs more examples (small code snippets, test adjustments, or a walkthrough of a failing test), tell me which area to expand and I will iterate.

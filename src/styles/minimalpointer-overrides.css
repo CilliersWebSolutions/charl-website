@@ -1,0 +1,74 @@
+/* Minimal pointer + mask overrides (split from swiper-overrides.css)
+   Import this where pointer behavior is needed (e.g., SwiperInit).
+*/
+
+:root{
+  --cw-pointer-size: 288px; /* default pointer diameter */
+  --cw-accent: #1aa05b;
+}
+
+/* ------------------- QUICKFACTS: POINTER & MASK ------------------- */
+.quickfacts-fadedimage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* mask is applied via the overlay element to avoid repainting the image
+     element which can cause flashing on some browsers */
+  z-index: 1;
+  cursor: none;
+}
+.quickfacts-fadedimage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.cw-mouse-circle {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--cw-pointer-size, 288px);
+  height: var(--cw-pointer-size, 288px);
+  border-radius: 50%;
+  border: 2px solid rgba(26,140,91,0.85);
+  background: rgba(26,140,91,0.06);
+  box-shadow: 0 8px 20px rgba(6,120,80,0.12);
+  z-index: 100;
+  pointer-events: none;
+  transform: translate3d(var(--cw-x, -9999px), var(--cw-y, -9999px), 0) translate(-50%,-50%) scale(var(--cw-scale, 0.001));
+  opacity: 0;
+  transition: opacity 160ms linear, background 180ms linear, box-shadow 180ms linear;
+  will-change: transform, opacity, background;
+}
+.cw-mouse-circle.cw-active {
+  opacity: 1;
+  background: rgba(26,140,91,0.12);
+  box-shadow: 0 12px 30px rgba(6,120,80,0.18);
+}
+.cw-mouse-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+  --mask-x: 50%;
+  --mask-y: 50%;
+  --mask-r: 0.01px;
+  /* overlay covers the image outside the mask; invert the gradient so the
+     overlay is opaque outside the circle and transparent inside (hole). */
+  background: var(--cw-overlay-bg, #fff);
+  -webkit-mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), transparent 0%, transparent 99%, #000 100%);
+  mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), transparent 0%, transparent 99%, #000 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  will-change: mask-image, background;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+}

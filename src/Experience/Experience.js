@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import Sizes from './utils/Sizes.js'
 import Time from './utils/Time.js'
-import Camera from './Camera.js'
-import Renderer from './Renderer.js'
+import Camera from './utils/Camera.js'
+import Renderer from './utils/Renderer.js'
 import World from './World/World.js'
 import Resources from './utils/Resources.js'
-import sources from './sources.js'
+import sources from './utils/sources.js'
 
 export default class Experience {
     constructor(canvas, container) {
