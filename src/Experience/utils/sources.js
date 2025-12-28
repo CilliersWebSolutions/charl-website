@@ -2,13 +2,13 @@ export default [
     {
         name: 'liningModel',
         type: 'gltfModel',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/68d1900f067299c802280c4f_landfill_square_V2.glb.txt'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695134a21c716fd126837ced_landfill_justSquare.glb.txt'
     },
 
     {
         name: 'liningTexture',
         type: 'texture',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/68a45b67774e43e59daa12e2_baked-1.jpg'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695134cb4e2164d263d7741f_baked-final.jpg'
     },
 
     {
