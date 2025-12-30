@@ -89,7 +89,7 @@
   left: var(--swiper-pagination-left, 0);
   right: var(--swiper-pagination-right, 0);
   top: var(--swiper-pagination-top, auto);
-  bottom: var(--swiper-pagination-bottom, 1rem);
+  bottom: var(--swiper-pagination-bottom, 4rem);
   z-index: 20;
   display: flex;
   gap: 0; /* spacing handled by dot element between labels */
@@ -173,13 +173,13 @@
   border-radius: 50%;
   flex: 0 0 auto;
   transition: background 180ms linear;
-  margin-left: 1.5rem;
-  margin-right: 1.5rem;
+  margin-left: 2rem;
+  margin-right: 2rem;
 }
 
 /* Active label state (color + slight vertical offset for optical centering) */
 .cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label {
-  font-size: 34px;
+  font-size: 32px;
   color: var(--swiper-pagination-color, #03854c);
   margin-top: -0.51rem;
 }
