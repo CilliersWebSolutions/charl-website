@@ -20,7 +20,7 @@
   --sw-bullet-active: #1aa05b;
   --sw-gap: 16px;
   /* Pagination tuning variables (designer-editable) */
-  --swiper-pagination-top: 0%;
+  --swiper-pagination-top: 0;
   --swiper-pagination-bottom: auto;
   --swiper-pagination-left: 16px;
   --swiper-pagination-right: 16px;
@@ -29,7 +29,7 @@
   --swiper-pagination-text-inactive: rgba(3, 133, 76, 0.89);
   --swiper-pagination-bullet-opacity: 1;
   --swiper-pagination-bullet-horizontal-gap: 0; /* use our flex gap instead */
-  --swiper-navigation-size: 100%;
+  --swiper-navigation-size: 9rem;
   
 }
 
@@ -68,7 +68,6 @@
   align-items: center;
   justify-content: center;
   transition: background 180ms linear;
-  margin-top: 8rem;
   margin-left: 1rem; /* spacing between label/dot and icon */
   margin-right: 1rem;
 }
@@ -94,10 +93,9 @@
   position: absolute;
   left: var(--swiper-pagination-left, 0);
   right: var(--swiper-pagination-right, 0);
-  
   /* Move pagination upwards by 4rem relative to the configured var.
      Using calc with a sane default avoids 'auto' fallback issues. */
-  top: calc(var(--swiper-pagination-top, 2rem));
+  top: 0;
   bottom: var(--swiper-pagination-bottom, 1rem);
   z-index: 20;
   display: flex;
