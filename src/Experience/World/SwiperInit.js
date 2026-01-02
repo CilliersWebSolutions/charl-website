@@ -102,14 +102,14 @@ export function initSwiper(scope = document) {
                     const updateNavState = () => {
                         try {
                             const isFirst = sw.realIndex === 0;
+                            const isLast = sw.realIndex === Math.max(0, slidesCount - 1);
                             if (prevEl instanceof Element) {
                                 prevEl.classList.toggle('cw-swiper-nav-inactive', isFirst);
                                 prevEl.setAttribute('aria-disabled', isFirst ? 'true' : 'false');
                             }
                             if (nextEl instanceof Element) {
-                                // ensure next is enabled when not at the last slide; keep simple here
-                                nextEl.classList.remove('cw-swiper-nav-inactive');
-                                nextEl.setAttribute('aria-disabled', 'false');
+                                nextEl.classList.toggle('cw-swiper-nav-inactive', isLast);
+                                nextEl.setAttribute('aria-disabled', isLast ? 'true' : 'false');
                             }
                         } catch (e) {
                             // eslint-disable-next-line no-console

@@ -20,7 +20,7 @@
   --sw-bullet-active: #1aa05b;
   --sw-gap: 16px;
   /* Pagination tuning variables (designer-editable) */
-  --swiper-pagination-top: -4rem;
+  --swiper-pagination-top: 0%;
   --swiper-pagination-bottom: auto;
   --swiper-pagination-left: 16px;
   --swiper-pagination-right: 16px;
@@ -68,6 +68,7 @@
   align-items: center;
   justify-content: center;
   transition: background 180ms linear;
+  margin-top: 8rem;
   margin-left: 1rem; /* spacing between label/dot and icon */
   margin-right: 1rem;
 }
@@ -86,16 +87,17 @@
 /* 2) Pagination (labels + dots)                                               */
 /* -------------------------------------------------------------------------- */
 
-.cw-swiper { position: relative; width: 100%; overflow: hidden; }
+.cw-swiper { position: relative; width: 100%; overflow: hidden; padding-top: 8rem;}
 .cw-swiper .swiper-wrapper { display: flex; align-items: stretch; will-change: transform; }
 
 .cw-swiper .swiper-pagination {
   position: absolute;
   left: var(--swiper-pagination-left, 0);
   right: var(--swiper-pagination-right, 0);
+  
   /* Move pagination upwards by 4rem relative to the configured var.
      Using calc with a sane default avoids 'auto' fallback issues. */
-  top: calc(var(--swiper-pagination-top, -4rem) - 2rem);
+  top: calc(var(--swiper-pagination-top, 2rem));
   bottom: var(--swiper-pagination-bottom, 1rem);
   z-index: 20;
   display: flex;
@@ -221,7 +223,7 @@
    a control shouldn't be used (e.g. previous arrow on the first slide). */
 .cw-swiper .swiper-button-prev.cw-swiper-nav-inactive,
 .cw-swiper .swiper-button-next.cw-swiper-nav-inactive {
-  opacity: 0.3;
+  opacity: 0;
   pointer-events: none;
 }
 
