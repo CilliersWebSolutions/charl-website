@@ -20,7 +20,7 @@
   --sw-bullet-active: #1aa05b;
   --sw-gap: 16px;
   /* Pagination tuning variables (designer-editable) */
-  --swiper-pagination-top: 0;
+  --swiper-pagination-top: 6rem;
   --swiper-pagination-bottom: auto;
   --swiper-pagination-left: 16px;
   --swiper-pagination-right: 16px;
@@ -95,7 +95,7 @@
   right: var(--swiper-pagination-right, 0);
   /* Move pagination upwards by 4rem relative to the configured var.
      Using calc with a sane default avoids 'auto' fallback issues. */
-  top: 0;
+  top: 4rem;
   bottom: var(--swiper-pagination-bottom, 1rem);
   z-index: 20;
   display: flex;
