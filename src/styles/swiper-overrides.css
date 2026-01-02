@@ -12,7 +12,9 @@
 ------------------------------------------------------------------------------*/
 
 :root{
-  --sw-btn-size: 44px;
+  /* Button / nav sizing (edit these to change helper sizes) */
+  --sw-btn-size: 36px;       /* width for nav icon container */
+  --sw-btn-height: 72px;     /* height for nav icon container */
   --sw-btn-bg: rgba(0,0,0,0.45);
   --sw-bullet: rgba(255,255,255,0.6);
   --sw-bullet-active: #1aa05b;
@@ -27,7 +29,10 @@
   --swiper-pagination-text-inactive: rgba(3, 133, 76, 0.89);
   --swiper-pagination-bullet-opacity: 1;
   --swiper-pagination-bullet-horizontal-gap: 0; /* use our flex gap instead */
+  --swiper-navigation-size: 9rem;
+  
 }
+
 
 /* -------------------------------------------------------------------------- */
 /* 1) Slider navigation & controls                                            */
@@ -57,8 +62,8 @@
 /* Nav icon container and SVG sizing */
 .cw-swiper .swiper-button-prev .nav-icon,
 .cw-swiper .swiper-button-next .nav-icon {
-  width: 36px;
-  height: 72px;
+  width: var(--sw-btn-size);
+  height: var(--sw-btn-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -88,11 +93,13 @@
   position: absolute;
   left: var(--swiper-pagination-left, 0);
   right: var(--swiper-pagination-right, 0);
-  top: var(--swiper-pagination-top, auto);
-  bottom: var(--swiper-pagination-bottom, 4rem);
+  /* Move pagination upwards by 4rem relative to the configured var.
+     Using calc with a sane default avoids 'auto' fallback issues. */
+  top: calc(var(--swiper-pagination-top, -4rem) - 2rem);
+  bottom: var(--swiper-pagination-bottom, 1rem);
   z-index: 20;
   display: flex;
-  gap: 0; /* spacing handled by dot element between labels */
+  gap: 0rem; /* spacing handled by dot element between labels */
   align-items: center;
   justify-content: center; /* center across full width */
   height: 32px; /* fixed height to avoid vertical shifting */
@@ -124,7 +131,7 @@
   box-sizing: border-box;
   transform-origin: center center;
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 400; /* thinner weight for pagination labels */
   font-size: 32px; /* visual size when inactive */
   line-height: 1;
   color: var(--swiper-pagination-text-inactive, rgba(3, 133, 76, 0.89));
@@ -159,7 +166,7 @@
 
 .cw-swiper-label {
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 400; /* use next-thinner weight */
   font-size: 26px; /* base label size */
   line-height: 1;
   color: var(--swiper-pagination-text-inactive, rgba(3, 133, 77, 0.548));
@@ -181,7 +188,7 @@
 .cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label {
   font-size: 32px;
   color: var(--swiper-pagination-color, #03854c);
-  margin-top: -0.51rem;
+/* margin-top: -0.48rem; */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -208,5 +215,13 @@
 
 @media (min-width: 900px) {
   .cw-swiper .swiper-slide { width: 100%; }
+}
+
+/* Inactive nav state: visually de-emphasize and prevent interaction when
+   a control shouldn't be used (e.g. previous arrow on the first slide). */
+.cw-swiper .swiper-button-prev.cw-swiper-nav-inactive,
+.cw-swiper .swiper-button-next.cw-swiper-nav-inactive {
+  opacity: 0.3;
+  pointer-events: none;
 }
 

@@ -2,7 +2,7 @@ export default [
     {
         name: 'liningModel',
         type: 'gltfModel',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/6952c750a40f89c97f68f01b_landfill_justSquare.glb.txt'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695793695e7fb52fd903a2ec_landfill_justSquare.glb.txt'
     },
 
     {

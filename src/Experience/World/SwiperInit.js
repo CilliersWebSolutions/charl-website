@@ -53,12 +53,17 @@ export function initSwiper(scope = document) {
             }
         } : false;
 
+        // Count slides early so we can tune loop cloning behaviour when loop:true
+        const slideElements = container.querySelectorAll('.swiper-slide');
+        const slidesCount = slideElements.length || 0;
+
         const options = {
             loop: true,
+            loopedSlides: Math.max(1, slidesCount), // help Swiper map pagination to looped clones
             slidesPerView: 1,
             spaceBetween: 16,
-                centeredSlides: false,
-                watchOverflow: true,
+            centeredSlides: false,
+            watchOverflow: true,
             // Force a single slide per view at all sizes (Designer preference)
             breakpoints: {
                 0:    { slidesPerView: 1, spaceBetween: 12 },
@@ -74,12 +79,47 @@ export function initSwiper(scope = document) {
             keyboard: { enabled: true },
             // Allow swiping on desktop if desired
             simulateTouch: true,
+            // Debug hooks: log slide-change lifecycle to help diagnose "double" navigation
+            on: {
+                slideChangeTransitionStart() {
+                    // eslint-disable-next-line no-console
+                    console.debug('swiper:start', { container: container.id || container.className, realIndex: this.realIndex, activeIndex: this.activeIndex });
+                },
+                slideChangeTransitionEnd() {
+                    // eslint-disable-next-line no-console
+                    console.debug('swiper:end', { container: container.id || container.className, realIndex: this.realIndex, activeIndex: this.activeIndex });
+                }
+            }
         };
 
         try {
             const sw = new Swiper(container, options);
             // store instance
             instances.set(container, sw);
+
+                // If navigation exists, keep prev button dimmed/disabled on first real slide
+                if (nav) {
+                    const updateNavState = () => {
+                        try {
+                            const isFirst = sw.realIndex === 0;
+                            if (prevEl instanceof Element) {
+                                prevEl.classList.toggle('cw-swiper-nav-inactive', isFirst);
+                                prevEl.setAttribute('aria-disabled', isFirst ? 'true' : 'false');
+                            }
+                            if (nextEl instanceof Element) {
+                                // ensure next is enabled when not at the last slide; keep simple here
+                                nextEl.classList.remove('cw-swiper-nav-inactive');
+                                nextEl.setAttribute('aria-disabled', 'false');
+                            }
+                        } catch (e) {
+                            // eslint-disable-next-line no-console
+                            console.warn('Failed to update nav state', e);
+                        }
+                    };
+                    // Update on init and on slide changes
+                    updateNavState();
+                    sw.on('slideChange', updateNavState);
+                }
 
             // Debug summary: expose and log useful info to help diagnose missing controls
             try {

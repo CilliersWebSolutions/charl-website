@@ -45,7 +45,7 @@ export default class Environment {
             // this.scene.add(topLightHelper);
 
             // Ambient light for soft fill
-            const ambientLight = new THREE.AmbientLight(0x888888, 2);
+            const ambientLight = new THREE.AmbientLight(0x888888, 4);
             this.scene.add(ambientLight);
     }
 }

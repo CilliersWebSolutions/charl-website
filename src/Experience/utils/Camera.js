@@ -18,8 +18,8 @@ export default class Camera {
 
     setInstance() {
         const aspectRatio = this.sizes.width / this.sizes.height;
-        this.instance = new THREE.PerspectiveCamera(60, aspectRatio, 0.1, 10000);
-        this.instance.position.set(5, 4, 6);
+        this.instance = new THREE.PerspectiveCamera(50, aspectRatio, 0.1, 10000);
+        this.instance.position.set(9, 6, 9);
         this.instance.lookAt(0, 0, 0);
         this.scene.add(this.instance);
     }
