@@ -29,7 +29,7 @@
   --swiper-pagination-text-inactive: rgba(3, 133, 76, 0.89);
   --swiper-pagination-bullet-opacity: 1;
   --swiper-pagination-bullet-horizontal-gap: 0; /* use our flex gap instead */
-  --swiper-navigation-size: 9rem;
+  --swiper-navigation-size: 100%;
   
 }
 
