@@ -86,7 +86,7 @@
 /* 2) Pagination (labels + dots)                                               */
 /* -------------------------------------------------------------------------- */
 
-.cw-swiper { position: relative; width: 100%; overflow: visible; }
+.cw-swiper { position: relative; width: 100%; overflow: hidden; }
 .cw-swiper .swiper-wrapper { display: flex; align-items: stretch; will-change: transform; }
 
 .cw-swiper .swiper-pagination {
