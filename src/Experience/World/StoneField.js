@@ -27,13 +27,17 @@ export default class StoneField {
         this.stonePlanes = [];
         this.perInstanceDelays = [];
         this.finalPositions = [];
-        this.perInstanceRotations = [];
+        this.perInstanceSpins = [];
         this.layerQuats = [];
         this.layerMeshes = [];
+        this.experience = opts.experience || null;
         this.stoneSizeMultiplier = opts.stoneSizeMultiplier || 1.0;
         this.stoneSeed = opts.stoneSeed || 0xCAFEBABE;
         this.heightAbove = opts.heightAbove || 8.0;
+        this.overlapPercent = opts.overlapPercent ?? 0.25; // target overlap between stacked stones along Y
         this.debug = !!opts.debug;
+        this._lastCameraPosition = new THREE.Vector3();
+        this._lastCameraQuaternion = new THREE.Quaternion();
     }
 
     refresh() {
@@ -45,37 +49,45 @@ export default class StoneField {
         this.stonePlanes = [];
         this.perInstanceDelays = [];
         this.finalPositions = [];
-        this.perInstanceRotations = [];
+        this.perInstanceSpins = [];
         this.layerQuats = [];
         this.layerMeshes = [];
     }
 
     generate(stoneLayerDefs) {
         this.refresh();
-        const boxDefs = {
-            layer2: { x: 4, z: 4, y: 0.180905 },
-            layer3: { x: 4, z: 4, y: 0.092328 },
-            layer7: { x: 4, z: 4, y: 0.180905 },
-            layer8: { x: 4, z: 4, y: 0.092328 },
-        };
 
         stoneLayerDefs.forEach((def, idx) => {
             const mesh = this.scene.children.find(child => child.name === def.name);
             if (!mesh) return;
-            // remember mesh reference for later (we'll use matrixWorld / getWorldQuaternion at update time)
             this.layerMeshes.push(mesh);
-            // ensure mesh world matrix is current before using it
             mesh.updateMatrixWorld(true);
             const center = mesh.position.clone();
-            const rawBox = boxDefs[def.name];
-            const shrinkFactor = 0.98;
-            const box = { x: rawBox.x * shrinkFactor, y: rawBox.y, z: rawBox.z * shrinkFactor };
-            const gridY = 3;
-            const stoneSize = (box.y / gridY) * 0.98 * def.sizeScale * this.stoneSizeMultiplier;
+
+            // Per-layer rows: how many stacked stone rows along Y for this container
+            const rows = Math.max(1, def.rows ?? 3);
+
+            // Derive per-mesh box from geometry bounds (scaled), so coverage matches actual container size
+            let box;
+            try {
+                const geo = mesh.geometry;
+                if (!geo.boundingBox) geo.computeBoundingBox();
+                const bb = geo.boundingBox;
+                const dimsLocal = new THREE.Vector3(bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z);
+                box = { x: Math.abs(dimsLocal.x * (mesh.scale?.x ?? 1)), y: Math.abs(dimsLocal.y * (mesh.scale?.y ?? 1)), z: Math.abs(dimsLocal.z * (mesh.scale?.z ?? 1)) };
+            } catch (e) {
+                // Fallback to previous constants if geometry is missing
+                const fallback = { x: 4, y: 0.12, z: 4 };
+                box = fallback;
+            }
+            // Derive stone size from container height and chosen rows, with desired overlap
+            const segmentY = box.y / rows;
+            const stoneSize = (segmentY / (1 - this.overlapPercent)) * 0.98 * def.sizeScale * this.stoneSizeMultiplier;
             let gridX = Math.max(1, Math.floor(box.x / stoneSize));
             let gridZ = Math.max(1, Math.floor(box.z / stoneSize));
             if (gridX < 1) gridX = 1;
             if (gridZ < 1) gridZ = 1;
+
             const planeGeo = new THREE.PlaneGeometry(stoneSize, stoneSize);
             const mat = new THREE.MeshStandardMaterial({
                 map: this.resources.items.stoneTexture,
@@ -87,45 +99,58 @@ export default class StoneField {
                 side: THREE.DoubleSide,
                 alphaTest: 0.05
             });
-            const totalInstances = gridX * gridY * gridZ;
+            const totalInstances = gridX * rows * gridZ;
             let instancedMesh = new THREE.InstancedMesh(planeGeo, mat, totalInstances);
             instancedMesh.castShadow = true;
             instancedMesh.receiveShadow = false;
             instancedMesh.frustumCulled = false;
-            const baseRotationOffset = Math.PI / 4;
+
             const seed = hashStringToInt(`${def.name}:${this.stoneSeed}:${idx}`);
             const rng = mulberry32(seed);
-            let delays = [];
-            let finalPositions = [];
-            let rotations = [];
-            for (let iy = 0; iy < gridY; iy++) {
+
+            const delays = [];
+            const finalPositions = [];
+            const spins = [];
+            for (let iy = 0; iy < rows; iy++) {
                 for (let ix = 0; ix < gridX; ix++) {
                     for (let iz = 0; iz < gridZ; iz++) {
                         const fx = gridX > 1 ? ix / (gridX - 1) : 0.5;
-                        const fy = gridY > 1 ? iy / (gridY - 1) : 0.5;
                         const fz = gridZ > 1 ? iz / (gridZ - 1) : 0.5;
-                        let localX = -box.x / 2 + fx * box.x;
-                        let localY = -box.y / 2 + fy * box.y;
-                        let localZ = -box.z / 2 + fz * box.z;
+                        // Keep centers inside container: offset by half stone size so planes don't push out
+                        const innerX = Math.max(0, box.x - stoneSize);
+                        const innerZ = Math.max(0, box.z - stoneSize);
+                        let localX = -box.x / 2 + (stoneSize * 0.5) + fx * innerX;
+                        let localZ = -box.z / 2 + (stoneSize * 0.5) + fz * innerZ;
+                        // Evenly space centers along Y using segment height; stones are larger than segment to overlap by overlapPercent.
+                        const yCenterStart = -box.y / 2 + segmentY * 0.5;
+                        let localY = yCenterStart + iy * segmentY;
                         const localPoint = new THREE.Vector3(localX, localY, localZ);
-                        // compute worldPoint via mesh.matrixWorld for more robust world transform
                         const worldPoint = localPoint.clone().applyMatrix4(mesh.matrixWorld);
+
                         let px = worldPoint.x; let py = worldPoint.y; let pz = worldPoint.z;
                         const jitterMax = stoneSize * 0.1;
+                        const jitterMaxY = jitterMax * 0.35; // small vertical jitter to avoid uniform lines
                         const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-                        px += clamp((rng() - 0.5) * jitterMax, -(px - (center.x - box.x / 2)), (center.x + box.x / 2) - px);
-                        py += clamp((rng() - 0.5) * jitterMax, -(py - (center.y - box.y / 2)), (center.y + box.y / 2) - py);
-                        pz += clamp((rng() - 0.5) * jitterMax, -(pz - (center.z - box.z / 2)), (center.z + box.z / 2) - pz);
+                        // Clamp centers to inner region bounds
+                        const minX = center.x - box.x / 2 + stoneSize * 0.5;
+                        const maxX = center.x + box.x / 2 - stoneSize * 0.5;
+                        const minZ = center.z - box.z / 2 + stoneSize * 0.5;
+                        const maxZ = center.z + box.z / 2 - stoneSize * 0.5;
+                        px += clamp((rng() - 0.5) * jitterMax, minX - px, maxX - px);
+                        py += clamp((rng() - 0.5) * jitterMaxY, -(py - (center.y - box.y / 2)), (center.y + box.y / 2) - py);
+                        pz += clamp((rng() - 0.5) * jitterMax, minZ - pz, maxZ - pz);
+
                         py = Math.min(py, center.y + box.y / 2 - stoneSize * 0.5);
-                        const randDelay = rng();
-                        delays.push(randDelay);
-                        finalPositions.push({x: px, y: py, z: pz});
-                        rotations.push(rng() * Math.PI * 2);
+                        delays.push(rng());
+                        finalPositions.push({ x: px, y: py, z: pz });
+                        spins.push(rng() * Math.PI * 2);
                     }
                 }
             }
-            let maxDelay = Math.max.apply(null, delays);
+
+            const maxDelay = Math.max.apply(null, delays);
             instancedMesh.userData.maxDelay = maxDelay;
+
             const finalsLen = finalPositions.length;
             if (finalsLen !== instancedMesh.count) {
                 if (finalsLen < instancedMesh.count) {
@@ -140,26 +165,21 @@ export default class StoneField {
                     instancedMesh = newMesh;
                 }
             }
-            // Precompute inverse matrix to convert world positions into mesh-local space
+
             const invMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+            const baseYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
             for (let k = 0; k < finalPositions.length; k++) {
                 const pos = finalPositions[k];
-                const rot = rotations[k] || 0;
-                // World start position (above final)
                 const worldStart = new THREE.Vector3(pos.x, pos.y + this.heightAbove, pos.z);
-                // Convert to mesh-local coordinates so local rotation composes correctly
                 const localPos = worldStart.clone().applyMatrix4(invMatrix);
                 const localMatrix = new THREE.Matrix4();
-                const localQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rot + baseRotationOffset);
+                const spinZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), spins[k] || 0);
+                const localQuat = new THREE.Quaternion().multiplyQuaternions(baseYQuat, spinZ);
                 localMatrix.compose(localPos, localQuat, new THREE.Vector3(1,1,1));
                 const worldMatrix = new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, localMatrix);
                 instancedMesh.setMatrixAt(k, worldMatrix);
-                if (this.debug && k === 0) {
-                    // small diagnostic to help trace transforms
-                    // eslint-disable-next-line no-console
-                    console.debug('[StoneField] gen sample', def.name, { worldStart, localPos, meshMatrix: mesh.matrixWorld.elements.slice(0,6) });
-                }
             }
+
             try {
                 const stoneTex = this.resources.items.stoneTexture;
                 if (stoneTex) {
@@ -199,7 +219,13 @@ export default class StoneField {
                                 } else if (vs.indexOf('vUv = uv;') !== -1) {
                                     vs = vs.replace('vUv = uv;', 'vUv = uv + instanceUvOffset;\n    vInstanceColor = instanceColor;');
                                 } else {
-                                    vs = vs.replace(/\n}\s*$/, '\n    vUv += instanceUvOffset;\n    vInstanceColor = instanceColor;\n}\n');
+                                    if (/void\s+main\s*\(\s*\)\s*{/.test(vs)) {
+                                        vs = vs.replace(/void\s+main\s*\(\s*\)\s*{/, 'void main() {\n    vInstanceColor = instanceColor;');
+                                        if (!/vUv\s*=/.test(vs)) {
+                                            vs = 'varying vec2 vUv;\n' + vs;
+                                            vs = vs.replace(/void\s+main\s*\(\s*\)\s*{/, 'void main() {\n    vUv = uv + instanceUvOffset;\n    vInstanceColor = instanceColor;');
+                                        }
+                                    }
                                 }
                                 shader.vertexShader = vs;
                                 let fs = shader.fragmentShader;
@@ -228,119 +254,89 @@ export default class StoneField {
 
             this.perInstanceDelays.push(delays);
             this.finalPositions.push(finalPositions);
-            this.perInstanceRotations.push(rotations);
+            this.perInstanceSpins.push(spins);
             this.scene.add(instancedMesh);
             instancedMesh.instanceMatrix.needsUpdate = true;
             this.stonePlanes.push(instancedMesh);
         });
     }
 
-    // Update stones: animate falling, opacity and finalization
     update(stoneAnimation, stoneLayerIndices) {
         for (let stoneIdx = 0; stoneIdx < this.stonePlanes.length; stoneIdx++) {
             const parentLayerIndex = stoneLayerIndices[stoneIdx];
             const parentState = stoneAnimation.layerStates.find(s => s.index === parentLayerIndex);
             if (!parentState) continue;
+
             const instancedMesh = this.stonePlanes[stoneIdx];
-            const fade = parentState.progress;
+            const mesh = this.layerMeshes[stoneIdx];
+            if (!mesh) continue;
+
             instancedMesh.castShadow = true;
             instancedMesh.receiveShadow = false;
             if (instancedMesh.material) {
                 instancedMesh.material.transparent = true;
-                instancedMesh.material.opacity = Math.max(0, Math.min(1, fade));
+                instancedMesh.material.opacity = Math.max(0, Math.min(1, parentState.progress));
             }
+
             const delays = this.perInstanceDelays[stoneIdx] || [];
             const finals = this.finalPositions[stoneIdx] || [];
-            const rotations = this.perInstanceRotations[stoneIdx] || [];
             const maxDelay = instancedMesh.userData.maxDelay || 1;
-            let prog = parentState.progress;
+            const spinsArr = this.perInstanceSpins[stoneIdx] || [];
+
             let anyUpdated = false;
-            const baseRotationOffset = Math.PI / 4;
-            for (let i = 0; i < instancedMesh.count; i++) {
-                let delay = delays[i] || 0;
-                let start = delay / maxDelay;
+            mesh.updateMatrixWorld(true);
+            const baseYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
+            const inv = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+
+            for (let i = 0; i < Math.min(instancedMesh.count, finals.length); i++) {
+                const finalPos = finals[i];
+                if (!finalPos) continue;
+
+                const delay = delays[i] || 0;
+                let start = delay / Math.max(0.0001, maxDelay);
                 const stoneAnimSeconds = 0.6;
                 let stoneAnimFrac = stoneAnimSeconds / Math.max(0.0001, stoneAnimation.duration);
                 let end = Math.min(1.0, start + stoneAnimFrac);
-                const finalPos = finals[i];
-                if (!finalPos) continue;
-                let y; let needsUpdate = false;
+
+                let y;
+                const prog = parentState.progress;
                 if (prog < start) {
                     y = finalPos.y + this.heightAbove;
-                    if (instancedMesh._lastY?.[i] !== y) needsUpdate = true;
                 } else if (prog >= end || prog >= 1.0) {
                     y = finalPos.y;
-                    if (instancedMesh._lastY?.[i] !== y) needsUpdate = true;
                 } else {
                     let localProg = (prog - start) / (end - start);
                     localProg = Math.max(0, Math.min(1, localProg));
                     localProg = easeOutCubic(localProg);
                     y = finalPos.y + (1 - localProg) * stoneAnimation.heightAbove;
-                    if (instancedMesh._lastY?.[i] !== y) needsUpdate = true;
                 }
-                if (needsUpdate) {
-                    // Build local matrix in the layer's local space then transform to world
-                    const rot = rotations[i] || 0;
-                    const mesh = this.layerMeshes[stoneIdx];
-                    if (mesh) {
-                        mesh.updateMatrixWorld(true);
-                        const worldPos = new THREE.Vector3(finalPos.x, y, finalPos.z);
-                        const inv = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
-                        const localPos = worldPos.clone().applyMatrix4(inv);
-                        const localMatrix = new THREE.Matrix4();
-                        const localQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rot + baseRotationOffset);
-                        localMatrix.compose(localPos, localQuat, new THREE.Vector3(1, 1, 1));
-                        const worldMatrix = new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, localMatrix);
-                        instancedMesh.setMatrixAt(i, worldMatrix);
-                    } else {
-                        const localMatrix = new THREE.Matrix4();
-                        const localQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rot + baseRotationOffset);
-                        localMatrix.compose(new THREE.Vector3(finalPos.x, y, finalPos.z), localQuat, new THREE.Vector3(1,1,1));
-                        instancedMesh.setMatrixAt(i, localMatrix);
-                    }
+
+                if (instancedMesh._lastY?.[i] !== y) {
+                    const worldPos = new THREE.Vector3(finalPos.x, y, finalPos.z);
+                    const localPos = worldPos.clone().applyMatrix4(inv);
+                    const localMatrix = new THREE.Matrix4();
+                    const spinZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), spinsArr[i] || 0);
+                    const localQuat = new THREE.Quaternion().multiplyQuaternions(baseYQuat, spinZ);
+                    localMatrix.compose(localPos, localQuat, new THREE.Vector3(1,1,1));
+                    const worldMatrix = new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, localMatrix);
+                    instancedMesh.setMatrixAt(i, worldMatrix);
                     anyUpdated = true;
                     if (!instancedMesh._lastY) instancedMesh._lastY = [];
                     instancedMesh._lastY[i] = y;
                 }
             }
+
             if (anyUpdated) instancedMesh.instanceMatrix.needsUpdate = true;
 
             if (parentState.progress >= 1.0) {
-                if (instancedMesh.userData && instancedMesh.userData._finalized) {
-                } else {
-                    const finalsLen = finals.length;
-                    for (let i = 0; i < Math.min(instancedMesh.count, finalsLen); i++) {
-                        const pos = finals[i];
-                        const rot = (this.perInstanceRotations && this.perInstanceRotations[stoneIdx] && this.perInstanceRotations[stoneIdx][i]) || 0;
-                            const mesh = this.layerMeshes[stoneIdx];
-                            if (mesh) {
-                                mesh.updateMatrixWorld(true);
-                                const worldPos = new THREE.Vector3(pos.x, pos.y, pos.z);
-                                const inv = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
-                                const localPos = worldPos.clone().applyMatrix4(inv);
-                                const localMatrix = new THREE.Matrix4();
-                                const localQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), rot + baseRotationOffset);
-                                localMatrix.compose(localPos, localQuat, new THREE.Vector3(1,1,1));
-                                const worldMatrix = new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, localMatrix);
-                                instancedMesh.setMatrixAt(i, worldMatrix);
-                            } else {
-                                const localMatrix = new THREE.Matrix4();
-                                const localQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), rot + baseRotationOffset);
-                                localMatrix.compose(new THREE.Vector3(pos.x, pos.y, pos.z), localQuat, new THREE.Vector3(1,1,1));
-                                instancedMesh.setMatrixAt(i, localMatrix);
-                            }
-                    }
-                    instancedMesh.instanceMatrix.needsUpdate = true;
-                    if (instancedMesh.material) {
-                        instancedMesh.material.opacity = 1;
-                        instancedMesh.material.transparent = false;
-                        instancedMesh.material.depthWrite = true;
-                        try { instancedMesh.material.side = THREE.DoubleSide; } catch (e) {}
-                        instancedMesh.material.alphaTest = Math.max(instancedMesh.material.alphaTest || 0, 0.1);
-                        instancedMesh.material.needsUpdate = true;
-                    }
+                if (!instancedMesh.userData) instancedMesh.userData = {};
+                if (!instancedMesh.userData._finalized) {
+                    instancedMesh.material.transparent = false;
+                    instancedMesh.material.depthWrite = true;
+                    try { instancedMesh.material.side = THREE.DoubleSide; } catch (e) {}
+                    instancedMesh.material.alphaTest = Math.max(instancedMesh.material.alphaTest || 0, 0.1);
+                    instancedMesh.material.needsUpdate = true;
                     instancedMesh._lastY = null;
-                    if (!instancedMesh.userData) instancedMesh.userData = {};
                     instancedMesh.userData._finalized = true;
                 }
             }

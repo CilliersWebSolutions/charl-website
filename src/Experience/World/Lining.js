@@ -1,39 +1,16 @@
 import * as THREE from 'three';
 import StoneField from './StoneField.js';
-
-// Deterministic RNG helpers so stone jitter/delays are reproducible across runs
-function hashStringToInt(str) {
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < str.length; i++) {
-        h = Math.imul(h ^ str.charCodeAt(i), 16777619) >>> 0;
-    }
-    return h >>> 0;
-}
-
-function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function() {
-        a |= 0;
-        a = (a + 0x6D2B79F5) >>> 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-// Easing helper for smoother stone settling
-function easeOutCubic(x) {
-    return 1 - Math.pow(1 - x, 3);
-}
+// Lining: orchestrates GLTF layer visibility/animation and delegates stone logic
+// to StoneField. Keeps texture color spaces correct for PBR and normal mapping.
 
 
 export default class Lining {
     // Stone layer definitions for use in generateStoneLayerPlanes
     stoneLayerDefs = [
-        { name: 'layer2', sizeScale: 1.0 },
-        { name: 'layer3', sizeScale: 1.0 },
-        { name: 'layer7', sizeScale: 1.0 },
-        { name: 'layer8', sizeScale: 1.0 },
+        { name: 'layer2', sizeScale: 1.0, rows: 3 },
+        { name: 'layer3', sizeScale: 1.0, rows: 3 },
+        { name: 'layer7', sizeScale: 1.0, rows: 3 },
+        { name: 'layer8', sizeScale: 1.0, rows: 3 },
     ];
     stoneLayerIndices = [2, 3, 7, 8];
     // stoneLayerMap removed — not needed for simplified generation
@@ -84,9 +61,15 @@ export default class Lining {
         this.resources = this.experience.resources;
         this.resource = this.resources.items.liningModel;
         this.liningTexture = this.resources.items.liningTexture;
+        this.liningNormal = this.resources.items.liningNormal;
         this.layerMeshes = [];
         this.stonePlanes = [];
-        this.stoneField = new StoneField(this.scene, this.resources, { stoneSizeMultiplier: this.stoneSizeMultiplier, stoneSeed: this.stoneSeed, heightAbove: this.stoneAnimation.heightAbove });
+        this.stoneField = new StoneField(this.scene, this.resources, { stoneSizeMultiplier: this.stoneSizeMultiplier, stoneSeed: this.stoneSeed, heightAbove: this.stoneAnimation.heightAbove, experience: this.experience });
+
+        // Color space mode for base textures:
+        // - 'filmic-baked': treat color textures as linear (NoColorSpace) because they already include filmic tone mapping from export
+        // - 'srgb': treat color textures as sRGB (typical PBR workflow)
+        this.colorSpaceMode = 'filmic-baked';
 
         this.setupLayers();
 
@@ -97,6 +80,7 @@ export default class Lining {
 
     setupLayers() {
         this.setupTexture(this.liningTexture);
+        this.setupNormalTexture(this.liningNormal);
 
         // First, add the GLTF model to the scene if it's not already there
         if (this.resource.scene && !this.scene.children.includes(this.resource.scene)) {
@@ -162,14 +146,20 @@ export default class Lining {
             } else {
                 // All other layers: visible and opaque
                 mesh.visible = true;
-                mesh.material = new THREE.MeshStandardMaterial({
+                const baseMatParams = {
                     map: this.liningTexture,
                     color: 0xffffff,
                     roughness: 0.7,
                     metalness: 0.1,
                     transparent: false,
                     opacity: 0
-                });
+                };
+                if (i === 5 || i === 10 || i === 11) {
+                    baseMatParams.normalMap = this.liningNormal || null;
+                    // Optionally tweak normal intensity
+                    // baseMatParams.normalScale = new THREE.Vector2(1, 1);
+                }
+                mesh.material = new THREE.MeshStandardMaterial(baseMatParams);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
             }
@@ -199,7 +189,21 @@ export default class Lining {
     setupTexture(texture) {
         if (!texture) return;
         texture.flipY = false;
-    texture.encoding = THREE.SRGBColorSpace;
+        // If textures were exported with Filmic baked, keep them linear to avoid double tone mapping darkening.
+        if (this.colorSpaceMode === 'filmic-baked') {
+            texture.colorSpace = THREE.NoColorSpace;
+        } else {
+            texture.colorSpace = THREE.SRGBColorSpace;
+        }
+        texture.needsUpdate = true;
+    }
+
+    setupNormalTexture(texture) {
+        if (!texture) return;
+        // Normal maps should be in linear/no color space
+        texture.flipY = false;
+        texture.colorSpace = THREE.NoColorSpace;
+        texture.needsUpdate = true;
     }
 
     update() {

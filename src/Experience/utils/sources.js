@@ -8,7 +8,7 @@ export default [
     {
         name: 'liningTexture',
         type: 'texture',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/6952c795cb1b902dfc082c89_baked-final.jpg'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695b81fb1a2c431424c12a67_baked-final.jpg'
     },
 
     {
