@@ -69,7 +69,7 @@ export default class Lining {
         // Color space mode for base textures:
         // - 'filmic-baked': treat color textures as linear (NoColorSpace) because they already include filmic tone mapping from export
         // - 'srgb': treat color textures as sRGB (typical PBR workflow)
-        this.colorSpaceMode = 'filmic-baked';
+        this.colorSpaceMode = 'srgb';
 
         this.setupLayers();
 
@@ -157,7 +157,7 @@ export default class Lining {
                 if (i === 5 || i === 10 || i === 11) {
                     baseMatParams.normalMap = this.liningNormal || null;
                     // Optionally tweak normal intensity
-                    // baseMatParams.normalScale = new THREE.Vector2(1, 1);
+                    baseMatParams.normalScale = new THREE.Vector2(1, 1);
                 }
                 mesh.material = new THREE.MeshStandardMaterial(baseMatParams);
                 mesh.castShadow = true;

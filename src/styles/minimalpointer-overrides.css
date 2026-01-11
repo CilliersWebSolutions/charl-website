@@ -3,7 +3,7 @@
 */
 
 :root{
-  --cw-pointer-size: 288px; /* default pointer diameter */
+  --cw-pointer-size: 400px; /* default pointer diameter */
   --cw-accent: #1aa05b;
 }
 
@@ -32,8 +32,8 @@
   position: fixed;
   left: 0;
   top: 0;
-  width: var(--cw-pointer-size, 288px);
-  height: var(--cw-pointer-size, 288px);
+  width: var(--cw-pointer-size, 500px);
+  height: var(--cw-pointer-size, 500px);
   border-radius: 50%;
   border: 2px solid rgba(26,140,91,0.85);
   background: rgba(26,140,91,0.06);
@@ -49,6 +49,7 @@
   opacity: 1;
   background: rgba(26,140,91,0.12);
   box-shadow: 0 12px 30px rgba(6,120,80,0.18);
+  z-index: 3;
 }
 .cw-mouse-overlay {
   position: absolute;

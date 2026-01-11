@@ -8,7 +8,13 @@ export default [
     {
         name: 'liningTexture',
         type: 'texture',
-        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695b81fb1a2c431424c12a67_baked-final.jpg'
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/69624714446ed1e9fcdf963e_baked-albedo2k-test.jpg'
+    },
+
+     {
+        name: 'liningNormal',
+        type: 'texture',
+        path: 'https://cdn.prod.website-files.com/68a43ca43fc6c140cf3f82c2/695bb176b045aeec4299bfc3_baked-normal1k.png'
     },
 
     {

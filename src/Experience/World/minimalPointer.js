@@ -22,7 +22,17 @@ export default function initMinimalPointer() {
   overlay.style.setProperty('--mask-y', '50%');
   overlay.style.setProperty('--mask-r', '0.01px');
   // Animation state
-  const targetRadius = 120; // final radius in px
+  // final radius in px (derived from CSS --cw-pointer-size when available)
+  let targetRadius = 120;
+  let pointerDiameterFromCss = null;
+  try {
+    const sizeVar = getComputedStyle(document.documentElement).getPropertyValue('--cw-pointer-size').trim();
+    const parsed = parseFloat(sizeVar);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      pointerDiameterFromCss = parsed;
+      targetRadius = parsed / 2;
+    }
+  } catch (err) {}
   // Make transitions snappy — lower duration for faster response
   const duration = 180; // ms
   let gsapTween = null;
@@ -118,7 +128,8 @@ export default function initMinimalPointer() {
 
   // initialize pointer size (base size equals 2 * targetRadius) and hidden
   currentRadius = 0;
-  const baseSize = targetRadius * 2;
+  const baseSize = Number.isFinite(pointerDiameterFromCss) && pointerDiameterFromCss > 0 ? pointerDiameterFromCss : (targetRadius * 2);
+  // Keep inline size in sync with CSS so scaling stays correct
   pointer.style.width = `${baseSize}px`;
   pointer.style.height = `${baseSize}px`;
   pointer.style.display = 'none';
