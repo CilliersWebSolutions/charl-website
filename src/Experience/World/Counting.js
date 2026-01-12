@@ -17,7 +17,7 @@ export default class Counting {
             const shouldFade = el.getAttribute("data-target") === "fade-in";
 
             // Ensure numeric content starts at "00"
-            el.textContent = "0";
+            el.textContent = "00";
 
             // Create a dummy counter object
             const counter = { val: 0 };

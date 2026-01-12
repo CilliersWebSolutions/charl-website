@@ -1,5 +1,3 @@
-
-
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -9,6 +7,7 @@ import Counting from "./Experience/World/Counting.js";
 
 import initMinimalPointer from "./Experience/World/minimalPointer.js";
 import { initSwiper } from "./Experience/World/SwiperInit.js";
+import Transitions from "./Experience/World/transitions.js";
 gsap.registerPlugin(ScrollTrigger);
 
 
@@ -21,6 +20,9 @@ window.Webflow.push(() => {
   initMinimalPointer();
   // Initialize Swiper instances for any Webflow-created `.swiper` containers
   try { initSwiper(); } catch (e) { console.warn('Swiper init failed', e); }
+
+  // New: fade-in / fade-out transitions
+  new Transitions();
 });
 // ProgressBar removed; no console logging required
 document.addEventListener('DOMContentLoaded', () => {

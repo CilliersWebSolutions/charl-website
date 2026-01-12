@@ -18,7 +18,7 @@
   --sw-btn-bg: rgba(0,0,0,0.45);
   --sw-bullet: rgba(255,255,255,0.6);
   --sw-bullet-active: #1aa05b;
-  --sw-gap: 16px;
+  --sw-gap: 0;
   /* Pagination tuning variables (designer-editable) */
   --swiper-pagination-top: 6rem;
   --swiper-pagination-bottom: auto;
@@ -29,7 +29,7 @@
   --swiper-pagination-text-inactive: rgba(3, 133, 76, 0.89);
   --swiper-pagination-bullet-opacity: 1;
   --swiper-pagination-bullet-horizontal-gap: 0; /* use our flex gap instead */
-  --swiper-navigation-size: 9rem;
+  --swiper-navigation-size: 4rem;
   
 }
 
@@ -132,7 +132,7 @@
   transform-origin: center center;
   font-family: inherit;
   font-weight: 400; /* thinner weight for pagination labels */
-  font-size: 32px; /* visual size when inactive */
+  font-size: 26px; /* visual size when inactive */
   line-height: 1;
   color: var(--swiper-pagination-text-inactive, rgba(3, 133, 76, 0.89));
   cursor: pointer;
@@ -170,8 +170,33 @@
   font-size: 26px; /* base label size */
   line-height: 1;
   color: var(--swiper-pagination-text-inactive, rgba(3, 133, 77, 0.548));
+  padding-bottom: 4px;
+  position: relative; /* anchor pseudo underline */
   transition: font-size 220ms cubic-bezier(.2,.9,.2,1), color 180ms linear;
 }
+
+/* Animated underline via pseudo-element */
+.cw-swiper-label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--swiper-pagination-color, #03854c);
+  transform: scaleX(0);
+  transition: transform 240ms cubic-bezier(.2,.9,.2,1);
+  will-change: transform;
+}
+
+/* Direction control: set origins differently for active vs previous */
+/* Forward: active grows left->right, previous collapses toward right */
+.cw-swiper.cw-dir-forward .swiper-pagination-bullet-active .cw-swiper-label::after { transform-origin: left center; }
+.cw-swiper.cw-dir-forward .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) .cw-swiper-label::after { transform-origin: right center; }
+
+/* Backward: active grows right->left, previous collapses toward left */
+.cw-swiper.cw-dir-backward .swiper-pagination-bullet-active .cw-swiper-label::after { transform-origin: right center; }
+.cw-swiper.cw-dir-backward .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) .cw-swiper-label::after { transform-origin: left center; }
 
 .cw-swiper-dot {
   width: 8px;
@@ -186,9 +211,14 @@
 
 /* Active label state (color + slight vertical offset for optical centering) */
 .cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label {
-  font-size: 32px;
+  font-size: 26px;
   color: var(--swiper-pagination-color, #03854c);
-/* margin-top: -0.48rem; */
+margin-top: -0.33rem;
+}
+
+/* Animate underline to full width when active */
+.cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label::after {
+  transform: scaleX(1);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -213,9 +243,9 @@
 
 /* .cw-swiper .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; } */
 
-@media (min-width: 900px) {
+/* @media (min-width: 900px) {
   .cw-swiper .swiper-slide { width: 100%; }
-}
+} */
 
 /* Inactive nav state: visually de-emphasize and prevent interaction when
    a control shouldn't be used (e.g. previous arrow on the first slide). */

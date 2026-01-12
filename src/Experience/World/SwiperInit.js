@@ -28,6 +28,8 @@ export function initSwiper(scope = document) {
 
         // Add a short class so designers can target this swiper instance with CSS variables
         container.classList.add('cw-swiper');
+        // Default direction for first interaction
+        container.classList.add('cw-dir-forward');
 
         // Look for optional navigation/pagination elements inside the container
         const nextEl = container.querySelector('.swiper-button-next');
@@ -96,6 +98,30 @@ export function initSwiper(scope = document) {
             const sw = new Swiper(container, options);
             // store instance
             instances.set(container, sw);
+
+                sw.__cw_prevRealIndex = sw.realIndex;
+                const setDirectionClass = () => {
+                    try {
+                        const prev = typeof sw.__cw_prevRealIndex === 'number' ? sw.__cw_prevRealIndex : sw.realIndex;
+                        const curr = sw.realIndex;
+                        if (prev === curr) return;
+                        let dirClass = 'cw-dir-forward';
+                        if (typeof sw.swipeDirection === 'string') {
+                            dirClass = sw.swipeDirection === 'prev' ? 'cw-dir-backward' : 'cw-dir-forward';
+                        } else {
+                            const total = Math.max(1, slidesCount);
+                            const forwardDist = (curr - prev + total) % total;
+                            const backwardDist = (prev - curr + total) % total;
+                            dirClass = forwardDist <= backwardDist ? 'cw-dir-forward' : 'cw-dir-backward';
+                        }
+                        container.classList.toggle('cw-dir-forward', dirClass === 'cw-dir-forward');
+                        container.classList.toggle('cw-dir-backward', dirClass === 'cw-dir-backward');
+                    } catch (e) {
+                        
+                    }
+                };
+                sw.on('slideChange', setDirectionClass);
+                sw.on('slideChangeTransitionEnd', () => { sw.__cw_prevRealIndex = sw.realIndex; });
 
                 // If navigation exists, keep prev button dimmed/disabled on first real slide
                 if (nav) {
