@@ -1,28 +1,33 @@
 import * as THREE from 'three';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Experience from "./Experience/Experience.js";
-import Counting from "./Experience/World/Counting.js";
 // ProgressBar removed per client request
-
-import initMinimalPointer from "./Experience/World/minimalPointer.js";
-import { initSwiper } from "./Experience/World/SwiperInit.js";
-import Transitions from "./Experience/World/transitions.js";
-gsap.registerPlugin(ScrollTrigger);
 
 
 
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  // Initialize counter animation for .number elements
-  new Counting();
-  initMinimalPointer();
-  // Initialize Swiper instances for any Webflow-created `.swiper` containers
-  try { initSwiper(); } catch (e) { console.warn('Swiper init failed', e); }
-
-  // New: fade-in / fade-out transitions
-  new Transitions();
+  // Only load/init desktop features above 991px
+  const mq = window.matchMedia('(min-width: 991px)');
+  let desktopInited = false;
+  const initDesktop = () => {
+    if (desktopInited || !mq.matches) return;
+    desktopInited = true;
+    // Dynamically import to avoid loading on small screens
+    Promise.all([
+      import('./Experience/World/Counting.js').then(m => { try { new m.default(); } catch (e) { console.warn('Counting init failed', e); } }),
+      import('./Experience/World/minimalPointer.js').then(m => { try { m.default(); } catch (e) { console.warn('Pointer init failed', e); } }),
+      import('./Experience/World/SwiperInit.js').then(m => { try { m.initSwiper(); } catch (e) { console.warn('Swiper init failed', e); } }),
+      import('./Experience/World/transitions.js').then(m => { try { new m.default(); } catch (e) { console.warn('Transitions init failed', e); } }),
+    ]).catch(() => {});
+  };
+  if (mq.matches) initDesktop();
+  // Initialize on first time crossing up to desktop
+  if (mq.addEventListener) {
+    mq.addEventListener('change', (e) => { if (e.matches) initDesktop(); });
+  } else if (mq.addListener) {
+    mq.addListener((e) => { if (e.matches) initDesktop(); });
+  }
 });
 // ProgressBar removed; no console logging required
 document.addEventListener('DOMContentLoaded', () => {
