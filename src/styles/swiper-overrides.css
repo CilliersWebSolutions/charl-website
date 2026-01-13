@@ -159,7 +159,7 @@
 /* Wrapper produced by renderBullet: label + dot */
 .cw-swiper-bullet-wrapper {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end; /* anchor labels to bottom to prevent lift */
   gap: 0;
   padding: 0;
 }
@@ -172,7 +172,10 @@
   color: var(--swiper-pagination-text-inactive, rgba(3, 133, 77, 0.548));
   padding-bottom: 4px;
   position: relative; /* anchor pseudo underline */
-  transition: font-size 220ms cubic-bezier(.2,.9,.2,1), color 180ms linear;
+  display: inline-block;
+  transform: scale(1);
+  transform-origin: bottom center; /* grow without changing baseline */
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1), color 180ms linear;
 }
 
 /* Animated underline via pseudo-element */
@@ -213,7 +216,7 @@
 .cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label {
   font-size: 26px;
   color: var(--swiper-pagination-color, #03854c);
-margin-top: -0.33rem;
+  transform: scale(1.08); /* subtle emphasis without layout shift */
 }
 
 /* Animate underline to full width when active */
@@ -253,5 +256,21 @@ margin-top: -0.33rem;
 .cw-swiper .swiper-button-next.cw-swiper-nav-inactive {
   opacity: 0;
   pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4) Responsive visibility                                                    */
+/* -------------------------------------------------------------------------- */
+/* Hide Swiper below 768px unless explicitly marked with .swiper-off */
+@media (max-width: 991px) {
+  .cw-swiper:not(.swiper-off) {
+    display: none !important;
+  }
+}
+
+/* When the slider is flagged off, stack slides by making wrapper block */
+.cw-swiper.swider-off .swiper-wrapper,
+.swiper-off .swiper-wrapper {
+  display: block !important;
 }
 
