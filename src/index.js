@@ -8,10 +8,16 @@ import Experience from "./Experience/Experience.js";
 window.Webflow ||= [];
 window.Webflow.push(() => {
   // Only load/init desktop features above 991px
-  const mq = window.matchMedia('(min-width: 991px)');
+  const DESKTOP_BREAKPOINT = 991;
+  const mq = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
+  const isDesktopWidth = () => {
+    try { return window.innerWidth >= DESKTOP_BREAKPOINT; } catch { return mq.matches; }
+  };
   let desktopInited = false;
   const initDesktop = () => {
-    if (desktopInited || !mq.matches) return;
+    if (desktopInited) return;
+    // Require both checks to reduce false positives
+    if (!mq.matches || !isDesktopWidth()) return;
     desktopInited = true;
     // Dynamically import to avoid loading on small screens
     Promise.all([
@@ -21,13 +27,15 @@ window.Webflow.push(() => {
       import('./Experience/World/transitions.js').then(m => { try { new m.default(); } catch (e) { console.warn('Transitions init failed', e); } }),
     ]).catch(() => {});
   };
-  if (mq.matches) initDesktop();
+  if (mq.matches && isDesktopWidth()) initDesktop();
   // Initialize on first time crossing up to desktop
   if (mq.addEventListener) {
-    mq.addEventListener('change', (e) => { if (e.matches) initDesktop(); });
+    mq.addEventListener('change', (e) => { if (e.matches && isDesktopWidth()) initDesktop(); });
   } else if (mq.addListener) {
-    mq.addListener((e) => { if (e.matches) initDesktop(); });
+    mq.addListener((e) => { if (e.matches && isDesktopWidth()) initDesktop(); });
   }
+  // Fallback: listen to resize for environments without reliable matchMedia
+  window.addEventListener('resize', () => { initDesktop(); }, { passive: true });
 });
 // ProgressBar removed; no console logging required
 document.addEventListener('DOMContentLoaded', () => {
