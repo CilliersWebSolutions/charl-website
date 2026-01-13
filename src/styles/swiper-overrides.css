@@ -261,16 +261,17 @@
 /* -------------------------------------------------------------------------- */
 /* 4) Responsive visibility                                                    */
 /* -------------------------------------------------------------------------- */
-/* Hide Swiper below 768px unless explicitly marked with .swiper-off */
+/* Hide Swiper below desktop breakpoint unless explicitly marked with .swiper-off */
 @media (max-width: 991px) {
-  .cw-swiper:not(.swiper-off) {
+  .cw-swiper:not(.swiper-off),
+  .swiper:not(.swiper-off) {
     display: none !important;
   }
 }
 
 /* When the slider is flagged off, stack slides by making wrapper block */
-.cw-swiper.swider-off .swiper-wrapper,
-.swiper-off .swiper-wrapper {
+.cw-swiper.slider-off .swiper-wrapper,
+.slider-off .swiper-wrapper {
   display: block !important;
 }
 

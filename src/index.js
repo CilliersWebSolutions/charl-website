@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import Experience from "./Experience/Experience.js";
 // ProgressBar removed per client request
+// Ensure Swiper overrides are always loaded (even when Swiper isn't initialized)
+import './styles/swiper-overrides.css';
 
 
 
