@@ -17,27 +17,32 @@ export default class Lining {
     resetLayerAnimationState() {
         // Each layer gets: {start: 0, end: 0, done: false, progress: 0}
         this.stoneAnimation.layerStates = [];
+        this.stoneAnimation.stateByIndex = {};
         let t = 0;
         // Ground layer (11) fades in first
-        this.stoneAnimation.layerStates.push({
+        const groundState = {
             type: 'ground',
             index: 11,
             start: t,
             end: t + this.stoneAnimation.groundFadeDuration,
             done: false,
             progress: 0
-        });
+        };
+        this.stoneAnimation.layerStates.push(groundState);
+        this.stoneAnimation.stateByIndex[11] = groundState;
         t += this.stoneAnimation.groundFadeDuration;
         // Layers 10 to 1 (including stone layers)
         for (let i = 10; i >= 1; i--) {
-            this.stoneAnimation.layerStates.push({
+            const state = {
                 type: this.stoneLayerIndices.includes(i) ? 'stone' : 'normal',
                 index: i,
                 start: t,
                 end: t + this.stoneAnimation.duration,
                 done: false,
                 progress: 0
-            });
+            };
+            this.stoneAnimation.layerStates.push(state);
+            this.stoneAnimation.stateByIndex[i] = state;
             t += this.stoneAnimation.duration;
         }
     }
@@ -63,6 +68,7 @@ export default class Lining {
         this.liningTexture = this.resources.items.liningTexture;
         this.liningNormal = this.resources.items.liningNormal;
         this.layerMeshes = [];
+        this.layerMeshByIndex = {};
         this.stonePlanes = [];
         this.stoneField = new StoneField(this.scene, this.resources, { stoneSizeMultiplier: this.stoneSizeMultiplier, stoneSeed: this.stoneSeed, heightAbove: this.stoneAnimation.heightAbove, experience: this.experience });
 
@@ -166,6 +172,7 @@ export default class Lining {
 
             this.scene.add(mesh);
             this.layerMeshes.push(mesh);
+            this.layerMeshByIndex[i] = mesh;
         }
 
     // Generate stone layers using StoneField helper
@@ -216,7 +223,7 @@ export default class Lining {
 
         // Animate ground layer (layer 11)
         const groundState = this.stoneAnimation.layerStates[0];
-        const groundMesh = this.scene.children.find(child => child.name === 'layer11');
+        const groundMesh = this.layerMeshByIndex[11] || this.scene.children.find(child => child.name === 'layer11');
         if (groundMesh) {
             let gprog = (t - groundState.start) / (groundState.end - groundState.start);
             gprog = Math.max(0, Math.min(1, gprog));
@@ -228,7 +235,7 @@ export default class Lining {
         // Animate layers 10 to 1 in sequence (no stone logic here)
         for (let l = 1; l < this.stoneAnimation.layerStates.length; l++) {
             const state = this.stoneAnimation.layerStates[l];
-            const mesh = this.scene.children.find(child => child.name === `layer${state.index}`);
+            const mesh = this.layerMeshByIndex[state.index] || this.scene.children.find(child => child.name === `layer${state.index}`);
             let prog = (t - state.start) / (state.end - state.start);
             prog = Math.max(0, Math.min(1, prog));
             state.progress = prog;

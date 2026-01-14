@@ -38,6 +38,17 @@ export default class StoneField {
         this.debug = !!opts.debug;
         this._lastCameraPosition = new THREE.Vector3();
         this._lastCameraQuaternion = new THREE.Quaternion();
+
+        // Reusable temp objects to avoid per-frame allocations in update()
+        this._tmpWorldPos = new THREE.Vector3();
+        this._tmpLocalPos = new THREE.Vector3();
+        this._tmpLocalMatrix = new THREE.Matrix4();
+        this._tmpWorldMatrix = new THREE.Matrix4();
+        this._tmpSpinQuat = new THREE.Quaternion();
+        this._tmpLocalQuat = new THREE.Quaternion();
+        this._tmpBaseYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
+        this._tmpInvMatrix = new THREE.Matrix4();
+        this._tmpScaleVec = new THREE.Vector3(1, 1, 1);
     }
 
     refresh() {
@@ -264,12 +275,19 @@ export default class StoneField {
     update(stoneAnimation, stoneLayerIndices) {
         for (let stoneIdx = 0; stoneIdx < this.stonePlanes.length; stoneIdx++) {
             const parentLayerIndex = stoneLayerIndices[stoneIdx];
-            const parentState = stoneAnimation.layerStates.find(s => s.index === parentLayerIndex);
+            const parentState = (stoneAnimation.stateByIndex && stoneAnimation.stateByIndex[parentLayerIndex])
+                || stoneAnimation.layerStates.find(s => s.index === parentLayerIndex);
             if (!parentState) continue;
 
             const instancedMesh = this.stonePlanes[stoneIdx];
             const mesh = this.layerMeshes[stoneIdx];
             if (!mesh) continue;
+
+            // If this layer is fully finished and the mesh has already been finalized,
+            // skip all per-instance work entirely.
+            if (parentState.progress >= 1.0 && instancedMesh.userData && instancedMesh.userData._finalized) {
+                continue;
+            }
 
             instancedMesh.castShadow = true;
             instancedMesh.receiveShadow = false;
@@ -285,8 +303,8 @@ export default class StoneField {
 
             let anyUpdated = false;
             mesh.updateMatrixWorld(true);
-            const baseYQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 4);
-            const inv = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+            const baseYQuat = this._tmpBaseYQuat;
+            const inv = this._tmpInvMatrix.copy(mesh.matrixWorld).invert();
 
             for (let i = 0; i < Math.min(instancedMesh.count, finals.length); i++) {
                 const finalPos = finals[i];
@@ -312,13 +330,14 @@ export default class StoneField {
                 }
 
                 if (instancedMesh._lastY?.[i] !== y) {
-                    const worldPos = new THREE.Vector3(finalPos.x, y, finalPos.z);
-                    const localPos = worldPos.clone().applyMatrix4(inv);
-                    const localMatrix = new THREE.Matrix4();
-                    const spinZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), spinsArr[i] || 0);
-                    const localQuat = new THREE.Quaternion().multiplyQuaternions(baseYQuat, spinZ);
-                    localMatrix.compose(localPos, localQuat, new THREE.Vector3(1,1,1));
-                    const worldMatrix = new THREE.Matrix4().multiplyMatrices(mesh.matrixWorld, localMatrix);
+                    const worldPos = this._tmpWorldPos.set(finalPos.x, y, finalPos.z);
+                    const localPos = this._tmpLocalPos.copy(worldPos).applyMatrix4(inv);
+                    const localMatrix = this._tmpLocalMatrix;
+                    const spinZ = this._tmpSpinQuat.setFromAxisAngle(new THREE.Vector3(0, 0, 1), spinsArr[i] || 0);
+                    const localQuat = this._tmpLocalQuat.multiplyQuaternions(baseYQuat, spinZ);
+                    const scaleVec = this._tmpScaleVec;
+                    localMatrix.compose(localPos, localQuat, scaleVec);
+                    const worldMatrix = this._tmpWorldMatrix.multiplyMatrices(mesh.matrixWorld, localMatrix);
                     instancedMesh.setMatrixAt(i, worldMatrix);
                     anyUpdated = true;
                     if (!instancedMesh._lastY) instancedMesh._lastY = [];
