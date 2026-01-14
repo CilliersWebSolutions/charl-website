@@ -12,27 +12,25 @@ export default class Transitions {
 
   _init() {
     const candidates = Array.from(document.querySelectorAll(
-      '[data-target], [data-anim], [fade-in], [Fade-in]'
+      '[fade-section], [Fade-section], [fade-hero], [Fade-hero], [fade-in], [Fade-in]'
     ));
 
     candidates.forEach((el) => {
-      const targetVal = ((el.getAttribute('data-anim') || el.getAttribute('data-target') || '') + '').toLowerCase().trim();
-      const fadeInAttrVal = ((el.getAttribute('fade-in') || el.getAttribute('Fade-in') || '') + '').toLowerCase().trim();
-     
-      const wantsIn = targetVal === 'fade-in' || el.hasAttribute('fade-in') || el.hasAttribute('Fade-in');
+      const hasFadeSection = el.hasAttribute('fade-section') || el.hasAttribute('Fade-section');
+      const hasFadeHero = el.hasAttribute('fade-hero') || el.hasAttribute('Fade-hero');
+      const hasFadeIn = el.hasAttribute('fade-in') || el.hasAttribute('Fade-in');
 
-      // Mode detection for special cases
-      const isHeroImmediate = fadeInAttrVal === 'hero' || targetVal === 'fade-in:hero';
-
-      // Only fade-in attribute is used; fade-out happens automatically on leave
-      if (wantsIn) {
-        if (isHeroImmediate) {
-          // Immediate reveal on load, then attach scroll toggle for subsequent interactions
-          this._setupFadeInImmediate(el);
-          this._setupFadeToggle(el);
-        } else {
-          this._setupFadeToggle(el);
-        }
+      if (hasFadeHero) {
+        this._setupFadeHero(el);
+        return;
+      }
+      if (hasFadeSection) {
+        this._setupFadeSection(el);
+        return;
+      }
+      if (hasFadeIn) {
+        this._setupFadeInOnce(el);
+        return;
       }
     });
   }
@@ -41,23 +39,74 @@ export default class Transitions {
     // Ensure starting state and animate once on load; minimum duration 1s
     const d = Math.max(1, this.duration);
     gsap.set(el, { opacity: 0 });
-    gsap.to(el, { opacity: 1, duration: d, ease: this.ease });
+    return new Promise((resolve) => {
+      gsap.to(el, {
+        opacity: 1,
+        duration: d,
+        ease: this.ease,
+        onComplete: () => {
+          try { ScrollTrigger.refresh(); } catch { /* noop */ }
+          resolve();
+        }
+      });
+    });
   }
 
-  
-
-  _setupFadeToggle(el) {
+  _setupFadeToggle(el, opts = {}) {
     // Unified fade in on enter and fade out on leave to avoid double triggers
-    gsap.set(el, { opacity: 0 });
+    const { initialVisible = false } = opts;
+    if (!initialVisible) {
+      gsap.set(el, { opacity: 0 });
+    }
+    let skipFirstEnter = !!initialVisible;
     ScrollTrigger.create({
       trigger: el,
       // Sections have ~8rem top/bottom padding; start slightly deeper to avoid premature reveal
       start: 'top 85%',
-      end: 'bottom 15%',
-      onEnter: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease }),
-      onEnterBack: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease }),
+      end: 'bottom 30%',
+      onEnter: () => {
+        if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
+        gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
+      },
+      onEnterBack: () => {
+        if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
+        gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
+      },
       onLeave: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease }),
       onLeaveBack: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease })
+    });
+  }
+
+  _setupFadeSection(el) {
+    // Section behavior: fade in on enter, fade out on leave
+    this._setupFadeToggle(el);
+  }
+
+  _setupFadeHero(el) {
+    // Hero behavior: one-time immediate fade, no scroll toggle afterwards
+    const isPinned = (() => {
+      try {
+        const pos = window.getComputedStyle(el).position;
+        return pos === 'fixed' || pos === 'sticky';
+      } catch { return false; }
+    })();
+
+    this._setupFadeInImmediate(el).then(() => {
+      // No toggle attached; keep visible (especially for pinned UI)
+      if (isPinned) {
+        try { ScrollTrigger.refresh(); } catch { /* noop */ }
+      }
+    });
+  }
+
+  _setupFadeInOnce(el) {
+    // One-time fade when entering viewport the first time; not affected by subsequent scrolls
+    gsap.set(el, { opacity: 0 });
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 90%',
+      once: true,
+      onEnter: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease })
     });
   }
 }

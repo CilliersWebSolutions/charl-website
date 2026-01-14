@@ -3,6 +3,8 @@ import Experience from "./Experience/Experience.js";
 // ProgressBar removed per client request
 // Ensure Swiper overrides are always loaded (even when Swiper isn't initialized)
 import './styles/swiper-overrides.css';
+// Ensure transition initial state CSS is loaded early to prevent flash
+import './styles/transitions.css';
 
 
 

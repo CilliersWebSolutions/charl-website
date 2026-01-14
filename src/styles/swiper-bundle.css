@@ -38,7 +38,7 @@
   position: relative;
   overflow: hidden;
   list-style: none;
-  padding: 0;
+  padding-left: 4rem;padding-right: 4rem;padding-bottom: 0px;padding-top: 6rem;
   /* Fix of Webkit flickering */
   z-index: 1;
   display: block;

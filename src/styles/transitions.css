@@ -1,0 +1,9 @@
+:root {}
+/* Prevent initial flash: hide fade targets until JS attaches triggers, only on desktop */
+@media (min-width: 991px) {
+  [fade-section], [Fade-section],
+  [fade-hero], [Fade-hero],
+  [fade-in], [Fade-in] {
+    opacity: 0;
+  }
+}

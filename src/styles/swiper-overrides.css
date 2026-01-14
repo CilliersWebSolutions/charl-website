@@ -20,7 +20,7 @@
   --sw-bullet-active: #1aa05b;
   --sw-gap: 0;
   /* Pagination tuning variables (designer-editable) */
-  --swiper-pagination-top: 6rem;
+  --swiper-pagination-top: 02rem;
   --swiper-pagination-bottom: auto;
   --swiper-pagination-left: 16px;
   --swiper-pagination-right: 16px;
@@ -86,7 +86,16 @@
 /* 2) Pagination (labels + dots)                                               */
 /* -------------------------------------------------------------------------- */
 
-.cw-swiper { position: relative; width: 100%; overflow: hidden; padding-top: 7rem;}
+.cw-swiper { 
+  position: relative; 
+  width: 100%; 
+  overflow: hidden; 
+   padding-left: 0px;
+padding-right: 0px;
+padding-bottom: 0px;
+padding-top: 6rem
+}
+
 .cw-swiper .swiper-wrapper { display: flex; align-items: stretch; will-change: transform; }
 
 .cw-swiper .swiper-pagination {
@@ -261,10 +270,11 @@
 /* -------------------------------------------------------------------------- */
 /* 4) Responsive visibility                                                    */
 /* -------------------------------------------------------------------------- */
-/* Hide Swiper below desktop breakpoint unless explicitly marked with .swiper-off */
+/* Hide Swiper below desktop breakpoint unless explicitly marked with .swiper-off
+   or .slider-off (stacked/mobile variant) */
 @media (max-width: 991px) {
-  .cw-swiper:not(.swiper-off),
-  .swiper:not(.swiper-off) {
+  .cw-swiper:not(.swiper-off):not(.slider-off),
+  .swiper:not(.swiper-off):not(.slider-off) {
     display: none !important;
   }
 }
@@ -273,5 +283,15 @@
 .cw-swiper.slider-off .swiper-wrapper,
 .slider-off .swiper-wrapper {
   display: block !important;
+}
+
+/* Hard override for mobile: ensure any Swiper wrapper stacks slides
+   vertically below the desktop breakpoint so vendor flex rules in
+   `swiper-bundle.css` cannot win. This is safe because interactive
+   Swipers are hidden under 991px. */
+@media (max-width: 991px) {
+  .swiper-wrapper {
+    display: block !important;
+  }
 }
 
