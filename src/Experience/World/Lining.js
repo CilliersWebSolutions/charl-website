@@ -270,6 +270,16 @@ export default class Lining {
         }
     }
 
+    isFinished() {
+        const layersDone = Array.isArray(this.stoneAnimation.layerStates)
+            ? this.stoneAnimation.layerStates.every(s => (s.progress ?? 0) >= 1)
+            : true;
+        const stonesDone = this.stoneField && typeof this.stoneField.isFinalized === 'function'
+            ? this.stoneField.isFinalized()
+            : true;
+        return layersDone && stonesDone;
+    }
+
     destroy() {
         // Clean up GUI and container
         if (this.gui) {

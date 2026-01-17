@@ -10,13 +10,20 @@ export default class Time extends EventEmitter {
         this.elapsed = 0
         this.delta = 16
 
-        //console.log('test time')
-        window.requestAnimationFrame(() => {
-            this.tick()
-        })
+        this.running = true
+        this._rafId = null
+        this._boundTick = this.tick.bind(this)
+
+        this._schedule()
+    }
+
+    _schedule() {
+        if (!this.running) return
+        this._rafId = window.requestAnimationFrame(this._boundTick)
     }
 
     tick() {
+        if (!this.running) return
         const currentTime = Date.now()
         this.delta = currentTime - this.current
         this.current = currentTime
@@ -24,8 +31,20 @@ export default class Time extends EventEmitter {
 
         this.trigger('tick')
 
-        window.requestAnimationFrame(() => {
-            this.tick()
-        })
+        this._schedule()
+    }
+
+    stop() {
+        this.running = false
+        if (this._rafId != null) {
+            try { cancelAnimationFrame(this._rafId) } catch {}
+            this._rafId = null
+        }
+    }
+
+    startLoop() {
+        if (this.running) return
+        this.running = true
+        this._schedule()
     }
 }

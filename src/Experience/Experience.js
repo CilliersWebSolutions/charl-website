@@ -26,13 +26,24 @@ export default class Experience {
 
 
         this.world = new World(this, container)
+        this._stopped = false
 
         // Optional UI effect is now handled by `initMinimalPointer` in the site entry.
 
         // Sizes resize event
         this.sizes.on('resize', () => {
             this.resize()
+            if (this._stopped) {
+                try { this.renderer.update() } catch {}
+            }
         })
+        try {
+            document.addEventListener('visibilitychange', () => {
+                if (this._stopped) return
+                if (document.hidden) this.time.stop()
+                else this.time.startLoop()
+            })
+        } catch {}
         // Time tick event
         this.time.on('tick', () => {
             this.update()
@@ -48,5 +59,10 @@ export default class Experience {
         this.camera.update()
         this.world.update()
         this.renderer.update()
+        if (!this._stopped && this.world.isIdle && this.world.isIdle()) {
+            this._stopped = true
+            this.time.stop()
+            try { this.renderer.update() } catch {}
+        }
     }
 }   

@@ -365,4 +365,12 @@ export default class StoneField {
     destroy() {
         this.refresh();
     }
+
+    isFinalized() {
+        if (!this.stonePlanes || this.stonePlanes.length === 0) return true;
+        for (const m of this.stonePlanes) {
+            if (!m || !m.userData || m.userData._finalized !== true) return false;
+        }
+        return true;
+    }
 }

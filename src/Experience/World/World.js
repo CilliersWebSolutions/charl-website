@@ -35,6 +35,10 @@ export default class World {
         })
     }
 
+    isIdle() {
+        return !!(this.Lining && typeof this.Lining.isFinished === 'function' && this.Lining.isFinished());
+    }
+
     update() {
 
        if (this.Lining && this.Lining.update) this.Lining.update();
