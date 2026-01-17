@@ -66,7 +66,6 @@ export default class Lining {
         this.resources = this.experience.resources;
         this.resource = this.resources.items.liningModel;
         this.liningTexture = this.resources.items.liningTexture;
-        this.liningNormal = this.resources.items.liningNormal;
         this.layerMeshes = [];
         this.layerMeshByIndex = {};
         this.stonePlanes = [];
@@ -86,7 +85,7 @@ export default class Lining {
 
     setupLayers() {
         this.setupTexture(this.liningTexture);
-        this.setupNormalTexture(this.liningNormal);
+        // Normal map removed to reduce payload and processing cost
 
         // First, add the GLTF model to the scene if it's not already there
         if (this.resource.scene && !this.scene.children.includes(this.resource.scene)) {
@@ -160,11 +159,7 @@ export default class Lining {
                     transparent: false,
                     opacity: 0
                 };
-                if (i === 5 || i === 10 || i === 11) {
-                    baseMatParams.normalMap = this.liningNormal || null;
-                    // Optionally tweak normal intensity
-                    baseMatParams.normalScale = new THREE.Vector2(1, 1);
-                }
+                // Normal map intentionally omitted for lightweight materials
                 mesh.material = new THREE.MeshStandardMaterial(baseMatParams);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
