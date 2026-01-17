@@ -7,3 +7,8 @@
     opacity: 0;
   }
 }
+
+/* Mitigate view-transitions overflow warnings on replaced elements */
+img, video, canvas {
+  overflow: clip; /* avoid overflow:visible on replaced elements */
+}

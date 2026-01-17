@@ -45,7 +45,7 @@ export default class Transitions {
         duration: d,
         ease: this.ease,
         onComplete: () => {
-          try { ScrollTrigger.refresh(); } catch { /* noop */ }
+          // Avoid calling ScrollTrigger.refresh() during init; it can conflict with other libs
           resolve();
         }
       });
@@ -59,22 +59,27 @@ export default class Transitions {
       gsap.set(el, { opacity: 0 });
     }
     let skipFirstEnter = !!initialVisible;
-    ScrollTrigger.create({
-      trigger: el,
-      // Sections have ~8rem top/bottom padding; start slightly deeper to avoid premature reveal
-      start: 'top 85%',
-      end: 'bottom 30%',
-      onEnter: () => {
-        if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
-        gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
-      },
-      onEnterBack: () => {
-        if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
-        gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
-      },
-      onLeave: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease }),
-      onLeaveBack: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease })
-    });
+    try {
+      ScrollTrigger.create({
+        trigger: el,
+        // Sections have ~8rem top/bottom padding; start slightly deeper to avoid premature reveal
+        start: 'top 85%',
+        end: 'bottom 30%',
+        onEnter: () => {
+          if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
+          gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
+        },
+        onEnterBack: () => {
+          if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
+          gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
+        },
+        onLeave: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease }),
+        onLeaveBack: () => gsap.to(el, { opacity: 0, duration: this.duration, ease: this.ease })
+      });
+    } catch (e) {
+      // Guard against environments where ScrollTrigger clashes with other scroll libraries
+      console.warn('ScrollTrigger create failed for fade toggle', e);
+    }
   }
 
   _setupFadeSection(el) {
@@ -93,20 +98,24 @@ export default class Transitions {
 
     this._setupFadeInImmediate(el).then(() => {
       // No toggle attached; keep visible (especially for pinned UI)
-      if (isPinned) {
-        try { ScrollTrigger.refresh(); } catch { /* noop */ }
-      }
+      // Avoid ScrollTrigger.refresh() here to prevent conflicts
     });
   }
 
   _setupFadeInOnce(el) {
     // One-time fade when entering viewport the first time; not affected by subsequent scrolls
     gsap.set(el, { opacity: 0 });
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top 90%',
-      once: true,
-      onEnter: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease })
-    });
+    try {
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease })
+      });
+    } catch (e) {
+      console.warn('ScrollTrigger create failed for fade-in-once', e);
+      // Fallback: immediate fade if ScrollTrigger fails
+      gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
+    }
   }
 }
