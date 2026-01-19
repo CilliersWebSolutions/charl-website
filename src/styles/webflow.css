@@ -1,0 +1,521 @@
+/* Charl Website — Consolidated Webflow CSS
+	 Contains:
+	 - Swiper overrides (scoped to `.cw-swiper`)
+	 - Minimal pointer + mask overrides
+	 - Transitions helpers
+
+	 Usage notes:
+	 - If using Swiper, load this after any vendor Swiper CSS so overrides win.
+	 - Keep selectors as-is; they are already scoped where necessary.
+----------------------------------------------------------------------------*/
+
+/* Swiper core essentials (minimal vendor rules) ------------------------------
+   Keep only what's needed for layout/positioning; visuals are overridden
+   by `.cw-swiper` styles below.
+----------------------------------------------------------------------------*/
+
+.swiper {
+	position: relative;
+	overflow: hidden;
+	list-style: none;
+	z-index: 1;
+	display: block;
+   
+}
+
+.swiper-wrapper {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	display: flex;
+	transition-property: transform;
+	box-sizing: content-box;
+}
+
+.swiper-slide {
+	flex-shrink: 0;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	transition-property: transform;
+	display: block;
+}
+
+.swiper-pagination {
+	position: absolute;
+	text-align: center;
+	transition: 300ms opacity;
+	transform: translate3d(0, 0, 0);
+	z-index: 10;
+}
+.swiper-pagination.swiper-pagination-hidden { opacity: 0; }
+.swiper-pagination-disabled > .swiper-pagination,
+.swiper-pagination.swiper-pagination-disabled { display: none !important; }
+
+.swiper-button-prev,
+.swiper-button-next {
+	position: absolute;
+	top: 50%;
+	z-index: 10;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.swiper-button-lock { display: none; }
+
+.swiper .swiper-notification {
+	position: absolute;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+	opacity: 0;
+	z-index: -1000;
+}
+
+/* Swiper overrides (scoped to `.cw-swiper`) ---------------------------------
+	 Structure:
+		 1) Slider navigation & controls (buttons, icons, disabled)
+		 2) Pagination (labels, dots, layout)
+		 3) Visual & layout helpers (wrapper, slides, responsive)
+
+	 Notes:
+	 - All selectors are scoped under `.cw-swiper` so Webflow's global Swiper
+		 styles are not accidentally overridden.
+	 - Keep this file imported after `swiper-bundle.css` so these rules win
+		 by load order without using `!important` except where necessary.
+------------------------------------------------------------------------------*/
+
+:root{
+	/* Button / nav sizing (edit these to change helper sizes) */
+	--sw-btn-size: 36px;       /* width for nav icon container */
+	--sw-btn-height: 72px;     /* height for nav icon container */
+	--sw-btn-bg: rgba(0,0,0,0.45);
+	--sw-bullet: rgba(255,255,255,0.6);
+	--sw-bullet-active: #1aa05b;
+	--sw-gap: 0;
+	/* Pagination tuning variables (designer-editable) */
+	--swiper-pagination-top: 02rem;
+	--swiper-pagination-bottom: auto;
+	--swiper-pagination-left: 16px;
+	--swiper-pagination-right: 16px;
+	--swiper-pagination-color: #03854c; /* active color */
+	--swiper-pagination-bullet-inactive-color: #0b6f48;
+	--swiper-pagination-text-inactive: rgba(3, 133, 76, 0.89);
+	--swiper-pagination-bullet-opacity: 1;
+	--swiper-pagination-bullet-horizontal-gap: 0; /* use our flex gap instead */
+	--swiper-navigation-size: 4rem;
+  
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* 1) Slider navigation & controls                                            */
+/* -------------------------------------------------------------------------- */
+
+/* Container-level helpers for nav buttons (scoped) */
+.cw-swiper .swiper-button-prev,
+.cw-swiper .swiper-button-next {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Positioning helpers (use CSS variables to shift if needed) */
+.cw-swiper .swiper-button-prev { left: var(--sw-gap); }
+.cw-swiper .swiper-button-next { right: var(--sw-gap); }
+
+/* Hide vendor pseudo arrows — we expect a `.nav-icon` child with an SVG */
+.cw-swiper .swiper-button-prev::after,
+.cw-swiper .swiper-button-next::after {
+	display: none !important;
+}
+
+/* Nav icon container and SVG sizing */
+.cw-swiper .swiper-button-prev .nav-icon,
+.cw-swiper .swiper-button-next .nav-icon {
+	width: var(--sw-btn-size);
+	height: var(--sw-btn-height);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 180ms linear;
+	margin-left: 1rem; /* spacing between label/dot and icon */
+	margin-right: 1rem;
+}
+
+.cw-swiper .swiper-button-prev .nav-icon svg,
+.cw-swiper .swiper-button-next .nav-icon svg {
+	width: 100%;
+	height: 100%;
+	fill: currentColor;
+}
+
+/* Disabled look */
+.cw-swiper .swiper-button-disabled { opacity: 0.45; pointer-events: auto; }
+
+/* -------------------------------------------------------------------------- */
+/* 2) Pagination (labels + dots)                                               */
+/* -------------------------------------------------------------------------- */
+
+.cw-swiper { 
+	position: relative; 
+	width: 100%; 
+	overflow: hidden; 
+	 padding-left: 4.5rem;
+padding-right: 4.5rem;
+padding-bottom: 6rem;
+padding-top: 6rem
+}
+
+.cw-swiper .swiper-wrapper { display: flex; align-items: stretch; will-change: transform; }
+
+.cw-swiper .swiper-pagination {
+	position: absolute;
+	left: var(--swiper-pagination-left, 0);
+	right: var(--swiper-pagination-right, 0);
+	/* Move pagination upwards by 4rem relative to the configured var.
+		 Using calc with a sane default avoids 'auto' fallback issues. */
+	top: 2rem;
+	bottom: var(--swiper-pagination-bottom, 1rem);
+	z-index: 20;
+	display: flex;
+	gap: 0rem; /* spacing handled by dot element between labels */
+	align-items: center;
+	justify-content: center; /* center across full width */
+	height: 32px; /* fixed height to avoid vertical shifting */
+}
+
+/* Center the bullets container, keep items on a single line */
+.cw-swiper .swiper-pagination-bullets {
+	display: flex !important;
+	align-items: center;
+	left: 50% !important;
+	transform: translateX(-50%) !important;
+	white-space: nowrap;
+}
+
+/* Reset vendor margins so our flex gap controls spacing */
+.cw-swiper .swiper-pagination-bullet {
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Text-based pagination bullet: label + optional dot */
+.cw-swiper .swiper-pagination .swiper-pagination-bullet {
+	width: auto !important;
+	height: auto !important;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 8px;
+	box-sizing: border-box;
+	transform-origin: center center;
+	font-family: inherit;
+	font-weight: 400; /* thinner weight for pagination labels */
+	font-size: 26px; /* visual size when inactive */
+	line-height: 1;
+	color: var(--swiper-pagination-text-inactive, rgba(3, 133, 76, 0.89));
+	cursor: pointer;
+	transition: transform 220ms cubic-bezier(.2,.9,.2,1), color 180ms linear;
+	-webkit-tap-highlight-color: transparent;
+	position: relative;
+	background: transparent !important;
+	border-radius: 0 !important;
+	opacity: 1;
+}
+
+/* Prevent vendor transforms; keep label size stable */
+.cw-swiper .swiper-pagination-bullet {
+	transform: none !important;
+	-webkit-transform: none !important;
+	color: var(--swiper-pagination-text-inactive, rgba(3, 133, 76, 0.89));
+}
+
+/* Ensure internal text doesn't wrap */
+.cw-swiper .swiper-pagination .swiper-pagination-bullet[data-swiper-label] {
+	white-space: nowrap;
+}
+
+/* Wrapper produced by renderBullet: label + dot */
+.cw-swiper-bullet-wrapper {
+	display: inline-flex;
+	align-items: flex-end; /* anchor labels to bottom to prevent lift */
+	gap: 0;
+	padding: 0;
+}
+
+.cw-swiper-label {
+	font-family: inherit;
+	font-weight: 400; /* use next-thinner weight */
+	font-size: 26px; /* base label size */
+	line-height: 1;
+	color: var(--swiper-pagination-text-inactive, rgba(3, 133, 77, 0.548));
+	padding-bottom: 4px;
+	position: relative; /* anchor pseudo underline */
+	display: inline-block;
+	transform: scale(1);
+	transform-origin: bottom center; /* grow without changing baseline */
+	transition: transform 220ms cubic-bezier(.2,.9,.2,1), color 180ms linear;
+}
+
+/* Animated underline via pseudo-element */
+.cw-swiper-label::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	height: 3px;
+	width: 100%;
+	background: var(--swiper-pagination-color, #03854c);
+	transform: scaleX(0);
+	transition: transform 240ms cubic-bezier(.2,.9,.2,1);
+	will-change: transform;
+}
+
+/* Direction control: set origins differently for active vs previous */
+/* Forward: active grows left->right, previous collapses toward right */
+.cw-swiper.cw-dir-forward .swiper-pagination-bullet-active .cw-swiper-label::after { transform-origin: left center; }
+.cw-swiper.cw-dir-forward .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) .cw-swiper-label::after { transform-origin: right center; }
+
+/* Backward: active grows right->left, previous collapses toward left */
+.cw-swiper.cw-dir-backward .swiper-pagination-bullet-active .cw-swiper-label::after { transform-origin: right center; }
+.cw-swiper.cw-dir-backward .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) .cw-swiper-label::after { transform-origin: left center; }
+
+.cw-swiper-dot {
+	width: 8px;
+	height: 8px;
+	background: var(--swiper-pagination-color, #03854c);
+	border-radius: 50%;
+	flex: 0 0 auto;
+	transition: background 180ms linear;
+	margin-left: 2rem;
+	margin-right: 2rem;
+}
+
+/* Active label state (color + slight vertical offset for optical centering) */
+.cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label {
+	font-size: 26px;
+	color: var(--swiper-pagination-color, #03854c);
+	transform: scale(1.08); /* subtle emphasis without layout shift */
+}
+
+/* Animate underline to full width when active */
+.cw-swiper .swiper-pagination-bullet.swiper-pagination-bullet-active .cw-swiper-label::after {
+	transform: scaleX(1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3) Visual & layout helpers                                                  */
+/* -------------------------------------------------------------------------- */
+
+/* Slides: keep each slide full-width and centered */
+ .cw-swiper .swiper-slide {
+	flex-shrink: 0;
+	width: 100%;
+	/* Ensure slides always occupy full container width. Use high specificity
+		 to override any Webflow-exported column/grid styles that may coerce
+		 slides into multi-column layout. */
+	flex: 0 0 100% !important;
+	width: 100% !important;
+	height: auto;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+} 
+
+/* .cw-swiper .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; } */
+
+/* @media (min-width: 900px) {
+	.cw-swiper .swiper-slide { width: 100%; }
+} */
+
+/* Inactive nav state: visually de-emphasize and prevent interaction when
+	 a control shouldn't be used (e.g. previous arrow on the first slide). */
+.cw-swiper .swiper-button-prev.cw-swiper-nav-inactive,
+.cw-swiper .swiper-button-next.cw-swiper-nav-inactive {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4) Responsive visibility                                                    */
+/* -------------------------------------------------------------------------- */
+/* Hide Swiper below desktop breakpoint unless explicitly marked with .swiper-off
+	 or .slider-off (stacked/mobile variant) */
+@media (max-width: 991px) {
+	.cw-swiper:not(.swiper-off):not(.slider-off),
+	.swiper:not(.swiper-off):not(.slider-off) {
+		display: none !important;
+	}
+}
+
+/* When the slider is flagged off, stack slides by making wrapper block */
+.cw-swiper.slider-off .swiper-wrapper,
+.slider-off .swiper-wrapper {
+	display: block !important;
+}
+
+/* Hard override for mobile: ensure any Swiper wrapper stacks slides
+	 vertically below the desktop breakpoint so vendor flex rules in
+	 `swiper-bundle.css` cannot win. This is safe because interactive
+	 Swipers are hidden under 991px. */
+@media (max-width: 991px) {
+	.swiper-wrapper {
+		display: block !important;
+	}
+}
+
+/* Minimal pointer + mask overrides (split from swiper-overrides.css)
+	 Import this where pointer behavior is needed (e.g., SwiperInit).
+*/
+
+:root{
+	--cw-pointer-size: 400px; /* default pointer diameter */
+	--cw-accent: #1aa05b;
+}
+
+/* ------------------- QUICKFACTS: POINTER & MASK ------------------- */
+.quickfacts-fadedimage {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	/* mask is applied via the overlay element to avoid repainting the image
+		 element which can cause flashing on some browsers */
+	z-index: 1;
+	cursor: none;
+}
+.quickfacts-fadedimage img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+	z-index: 1;
+}
+
+.cw-mouse-circle {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: var(--cw-pointer-size, 500px);
+	height: var(--cw-pointer-size, 500px);
+	border-radius: 50%;
+	border: 2px solid rgba(26,140,91,0.85);
+	background: rgba(26,140,91,0.06);
+	box-shadow: 0 8px 20px rgba(6,120,80,0.12);
+	z-index: 100;
+	pointer-events: none;
+	transform: translate3d(var(--cw-x, -9999px), var(--cw-y, -9999px), 0) translate(-50%,-50%) scale(var(--cw-scale, 0.001));
+	opacity: 0;
+	transition: opacity 160ms linear, background 180ms linear, box-shadow 180ms linear;
+	will-change: transform, opacity, background;
+}
+.cw-mouse-circle.cw-active {
+	opacity: 1;
+	background: rgba(26,140,91,0.12);
+	box-shadow: 0 12px 30px rgba(6,120,80,0.18);
+	z-index: 3;
+}
+.cw-mouse-overlay {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	z-index: 2;
+	--mask-x: 50%;
+	--mask-y: 50%;
+	--mask-r: 0.01px;
+	/* overlay covers the image outside the mask; invert the gradient so the
+		 overlay is opaque outside the circle and transparent inside (hole). */
+	background: var(--cw-overlay-bg, #fff);
+	-webkit-mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), transparent 0%, transparent 99%, #000 100%);
+	mask-image: radial-gradient(circle var(--mask-r) at var(--mask-x) var(--mask-y), transparent 0%, transparent 99%, #000 100%);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	will-change: mask-image, background;
+	-webkit-mask-position: 0 0;
+	mask-position: 0 0;
+}
+
+:root {}
+/* Prevent initial flash: hide fade targets until JS attaches triggers, only on desktop */
+@media (min-width: 991px) {
+	[fade-section], [Fade-section],
+	[fade-hero], [Fade-hero],
+	[fade-in], [Fade-in] {
+		opacity: 0;
+	}
+}
+
+/* Mitigate view-transitions overflow warnings on replaced elements */
+img, video, canvas {
+	overflow: clip; /* avoid overflow:visible on replaced elements */
+}
+
+/* -----------------------------------------
+	 REVEALED WRAPPER (anti-bot contact reveal)
+	 ----------------------------------------- */
+
+.revealed-wrapper {
+	width: 10.5rem; /* match your button width */
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.45rem;
+	padding: 1rem 0.65rem;
+
+	
+	
+	
+	opacity: 0;
+	animation: fadeInReveal 0.25s ease-out forwards;
+	font-family: inherit;
+	cursor: default;
+}
+
+@keyframes fadeInReveal {
+	from { opacity: 0; transform: translateY(2px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+.revealed-text {
+	font-size: 1.2rem;
+	font-weight: 400;
+	color: #191d19;
+	letter-spacing: 0.3px;
+	user-select: text;
+}
+
+.revealed-text::selection { background: #d0eaff; }
+
+.copy-icon {
+	font-size: 0.95rem;
+	opacity: 0.65;
+	cursor: pointer;
+	transition: opacity 0.2s ease, transform 0.15s ease;
+	user-select: none;
+}
+
+.copy-icon:hover { opacity: 1; transform: scale(1.12); }
+.copy-icon.copied { color: #2e8b57; opacity: 1; transform: scale(1.15); }
+.copy-icon:focus { outline: 2px solid #4a90e2; outline-offset: 2px; }
+
+.button-email,
+.button-phone {
+	width: 10.5rem; /* match reveal width */
+	transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.button-email:hover,
+.button-phone:hover { transform: translateY(-1px); opacity: 0.9; }
+

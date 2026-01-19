@@ -1,8 +1,6 @@
 
 import Experience from "../Experience"
 import Environment from "./Environment"
-//import Floor from './Floor'
-//import Resources from '../utils/Resources'
 import Lining from './Lining.js'
 
 
