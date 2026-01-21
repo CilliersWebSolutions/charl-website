@@ -4,40 +4,46 @@ Purpose: concise, actionable guidance to make an AI coding agent productive in t
 
 Big picture
 - Container-scoped Three.js Experiences. `src/index.js` finds `[data-3d]` containers and boots an `Experience` per container (separate canvas/sizing per instance).
-- `src/Experience/Experience.js` composes Scene, `utils/Camera`, `utils/Renderer`, World, `utils/Time`, and `utils/Resources`. World children (e.g., `World/Lining.js`) are created after `Resources` emits `ready`.
+- `src/Experience/Experience.js` composes Scene, `utils/Camera`, `utils/Renderer`, World, `utils/Time`, and `utils/Resources`. World children (e.g., `World/Lining.js`) are created after `Resources` emits `ready`. The frame loop auto-stops when `World.isIdle()` reports finished.
+- Desktop-only features (counters, pointer, swiper, transitions) are dynamically imported inside `window.Webflow.push` and gated behind `matchMedia('(min-width: 991px)')` plus an `innerWidth` check.
 
 Key files & locations
-- Entry: `src/index.js` — initializes Experiences for `[data-3d="lining"]`; gates other desktop-only features via `window.Webflow` and `matchMedia(>=991px)`.
-- Core wiring: `src/Experience/Experience.js`, `src/Experience/utils/Renderer.js`, `src/Experience/utils/Camera.js`.
-- World: `src/Experience/World/World.js`, `src/Experience/World/Lining.js` (animates GLTF layers + stones), `src/Experience/World/Environment.js`.
-- Utilities: `src/Experience/utils/Resources.js`, `src/Experience/utils/Sizes.js`, `src/Experience/utils/Time.js`, `src/Experience/utils/EventEmitter.js`.
-- Asset sources: `src/Experience/utils/sources.js` (Webflow-hosted assets; GLTFs may use `.glb.txt`).
-- Shaders: `src/Experience/utils/shaders/*.glsl` (bundled as text in dev/build via esbuild loader).
-- Build/dev scripts: `bin/build-dev.js` (esbuild watch + Express server, live-reload inject), `bin/build-prod.js`.
+- Entry/runtime: `src/index.js` — always wires contact anti-bot (`World/Jingjang.js`); on desktop initializes `World/Counting.js`, `World/minimalPointer.js`, `World/SwiperInit.js`, `World/transitions.js`.
+- Core wiring: `src/Experience/Experience.js`, `src/Experience/utils/Renderer.js` (SRGB + ACES, shadows), `src/Experience/utils/Camera.js`.
+- World: `src/Experience/World/World.js` (waits for `Resources.ready`, chooses component by container `data-3d`), `src/Experience/World/Lining.js` (GLTF layers + stone animation), `src/Experience/World/Environment.js` (three‑point lights & shadow tuning).
+- Utilities: `src/Experience/utils/Resources.js` (GLTF/DRACO/Texture loaders), `src/Experience/utils/Sizes.js` (per-container), `src/Experience/utils/Time.js` (RAF + pause/resume), `src/Experience/utils/EventEmitter.js`.
+- Assets: `src/Experience/utils/sources.js` (Webflow-hosted URLs; GLTF can be `.glb.txt`).
+- UI & styles: `src/Experience/World/SwiperInit.js` (local Swiper CSS via `src/styles/*.css`), `src/styles/transitions.css`, `src/styles/minimalpointer-overrides.css`.
+- Custom CSS: `src/styles/webflow.css` is the consolidated site CSS. After building/testing locally, its contents are pasted into the Webflow Designer “Custom Code” head section for deployment.
+- Build/dev: `bin/build-dev.js` (esbuild watch + Express server + SSE live reload), `bin/build-prod.js`.
 
 Developer workflows
-- Dev server: run `pnpm dev` (serves from `docs/` at http://localhost:3000, defines `SERVE_ORIGIN`, loads `.glsl` as text, sets permissive CORS headers).
-- Production build: run `pnpm build` (outputs static site to `docs/`).
-- Tests: run `pnpm test`. Playwright `webServer` auto-starts `pnpm dev` on port 3000 and reuses an existing server.
-- Deploy: run `pnpm deploy` (publishes `docs/` via `gh-pages`).
+- Dev server: `pnpm dev` serves from `docs/` at http://localhost:3000, defines `SERVE_ORIGIN`, loads `.glsl` as text, and sets permissive CORS (incl. `Access-Control-Allow-Private-Network`).
+- Production build: `pnpm build` outputs static site to `docs/` (no live-reload injection).
+- Tests: `pnpm test` starts Playwright with `webServer: { command: 'pnpm dev', port: 3000, reuseExistingServer: true }`. Example spec currently targets playwright.dev as a placeholder.
+- Deploy: `pnpm deploy` publishes `docs/` via `gh-pages` (runs `pnpm build` first).
 
 Project-specific conventions
-- Per-container sizing: use `Sizes(container)`; never assume a global full-window canvas.
-- Resource-first: create World components only after `Resources.on('ready')` (see `World/World.js`).
-- Frame loop: `Time` emits `tick` → update camera/world → renderer renders.
-- Color spaces: renderer uses `SRGBColorSpace` + ACES; color textures usually `SRGBColorSpace`, normal maps `NoColorSpace`. See `World/Lining.js` `setupTexture()`/`setupNormalTexture()`.
-- Stone/Layer animation: `World/Lining.js` manages GLTF layer opacity/position and delegates stone generation/updates to `World/StoneField.js`.
+- Per-container sizing: always pass the container to `Sizes`; each Experience manages its own canvas.
+- Resource-first world: construct World components only after `Resources.on('ready')` fires.
+- Frame loop: `Time` emits `tick` → update camera/world → render; auto-stops when `World.isIdle()` and can resume on `visibilitychange`.
+- Color spaces: renderer uses `SRGBColorSpace` + ACES; base color textures usually `SRGBColorSpace`, normal maps `NoColorSpace`. See `Lining.setupTexture()`.
+- Stones: `World/StoneField.js` uses `THREE.InstancedMesh` plus `material.onBeforeCompile` injection to add per-instance UV offsets and tints; update `material.needsUpdate` if customizing.
+- Desktop gating: initialize Swiper, transitions, counters, and pointer only when `(min-width: 991px)` is satisfied; imports are lazy and guarded.
 
 Integration points & deps
-- Rendering: `three`.
-- UI: `swiper` with site overrides in `src/styles/swiper-overrides.css`; additional CSS in `src/styles/transitions.css`.
-- GLTF/Draco: `Resources` wires `GLTFLoader` + `DRACOLoader`. Decoder path points to a CDN (see `Resources.setLoaders()`), not local `docs/draco` during dev.
-- Dev server: `bin/build-dev.js` injects `bin/live-reload.js` and sets CORS headers (including Private-Network) used by tests.
+- Rendering: `three` (0.164.x).
+- Animation/scroll: `gsap` + `ScrollTrigger` in `World/transitions.js` and `World/Counting.js`.
+- UI: `swiper` via `World/SwiperInit.js` with local CSS copies (`src/styles/swiper-bundle.css`, overrides) to ensure bundling.
+- GLTF/Draco: `Resources` wires `GLTFLoader` + `DRACOLoader`; decoder path is a CDN (not local `docs/draco`) in dev/build.
+- Dev server: `bin/live-reload.js` uses SSE at `/esbuild` for reload; `bin/build-dev.js` logs served files + import tags.
 
 Debugging tips
-- Assets not loading: verify URLs in `utils/sources.js` and CORS in `bin/build-dev.js`.
-- Shaders: ensure `.glsl` files compile as text (esbuild `loader: { '.glsl': 'text' }`).
-- Scene not rendering: confirm Experience is attached to a container with `[data-3d="lining"]` and that `Resources` reached `ready`.
-- Visual issues: check texture `flipY` and color space, and that materials are updated before animation.
+- Assets not loading: check `utils/sources.js` URLs and CORS headers in `bin/build-dev.js`.
+- Shaders: ensure `.glsl` files bundle as text via esbuild `loader: { '.glsl': 'text' }`.
+- Scene not rendering: verify a container with `[data-3d="lining"]` exists and `Resources` reached `ready`.
+- Visual issues: confirm texture `flipY` and color space; shadow artifacts can be tuned in `World/Environment.js` (bias/normalBias/radius).
 
-Need more detail on a specific area (e.g., Playwright app tests, asset hosting changes, or adding a new World component)? Ask and I’ll expand with focused examples.
+Extending
+- New container Experience: add a `[data-3d="..."]` container, branch in `World/World.js`, and add assets to `utils/sources.js`.
+- Swiper: call `initSwiper(scope?)` after Webflow DOM is ready; direction classes `cw-dir-forward/backward` are toggled for CSS.

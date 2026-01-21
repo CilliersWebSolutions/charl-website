@@ -63,8 +63,8 @@ export default class Transitions {
       ScrollTrigger.create({
         trigger: el,
         // Sections have ~8rem top/bottom padding; start slightly deeper to avoid premature reveal
-        start: 'top 85%',
-        end: 'bottom 30%',
+        start: 'top 80%',
+        end: 'bottom 40%',
         onEnter: () => {
           if (skipFirstEnter) { gsap.set(el, { opacity: 1 }); skipFirstEnter = false; return; }
           gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
