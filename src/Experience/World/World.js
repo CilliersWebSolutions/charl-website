@@ -28,7 +28,7 @@ export default class World {
                 this.environment = new Environment(this.experience, container)
             } 
             else {
-                console.log('nothing was loaded')
+                // No matching world component to load for this container
             }
         })
     }

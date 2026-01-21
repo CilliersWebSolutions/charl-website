@@ -130,8 +130,7 @@ export function initSwiper(scope = document) {
                                 nextEl.setAttribute('aria-disabled', isLast ? 'true' : 'false');
                             }
                         } catch (e) {
-                            // eslint-disable-next-line no-console
-                            console.warn('Failed to update nav state', e);
+                            // swallow non-critical nav state update issues in production
                         }
                     };
                     // Update on init and on slide changes
@@ -139,28 +138,7 @@ export function initSwiper(scope = document) {
                     sw.on('slideChange', updateNavState);
                 }
 
-            // Debug summary: expose and log useful info to help diagnose missing controls
-            try {
-                if (typeof window !== 'undefined') {
-                    window.__cw_swipers = window.__cw_swipers || [];
-                    window.__cw_swipers.push(sw);
-                }
-                const wrapper = container.querySelector('.swiper-wrapper');
-                const slidesCount = wrapper ? wrapper.querySelectorAll('.swiper-slide').length : container.querySelectorAll('.swiper-slide').length;
-                // eslint-disable-next-line no-console
-                console.debug('Swiper initialized', {
-                    container: container.id || container.className || container.tagName,
-                    slides: slidesCount,
-                    hasWrapper: !!wrapper,
-                    pagination: !!container.querySelector('.swiper-pagination'),
-                    navigationPrev: !!container.querySelector('.swiper-button-prev'),
-                    navigationNext: !!container.querySelector('.swiper-button-next'),
-                    options
-                });
-            } catch (dbgErr) {
-                // eslint-disable-next-line no-console
-                console.warn('Swiper debug logging failed', dbgErr);
-            }
+            // Debug summary removed for production cleanliness
         } catch (err) {
             // Provide context to debug why Swiper failed to initialize in this environment
             // eslint-disable-next-line no-console

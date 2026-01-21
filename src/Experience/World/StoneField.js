@@ -252,7 +252,7 @@ export default class StoneField {
                                 }
                                 shader.fragmentShader = fs;
                             } catch (e) {
-                                console.warn('[StoneField] failed to inject instanced UV+color shader code', e);
+                                // Silenced non-critical shader injection issues in production
                             }
                         };
                         material[injectOnceKey] = true;
@@ -260,7 +260,7 @@ export default class StoneField {
                     }
                 }
             } catch (e) {
-                console.warn('[StoneField] failed to add per-instance UV offsets', e);
+                // Silenced non-critical instancing UV/tint setup issues in production
             }
 
             this.perInstanceDelays.push(delays);

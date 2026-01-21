@@ -78,7 +78,7 @@ export default class Transitions {
       });
     } catch (e) {
       // Guard against environments where ScrollTrigger clashes with other scroll libraries
-      console.warn('ScrollTrigger create failed for fade toggle', e);
+      // Silenced in production
     }
   }
 
@@ -113,8 +113,7 @@ export default class Transitions {
         onEnter: () => gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease })
       });
     } catch (e) {
-      console.warn('ScrollTrigger create failed for fade-in-once', e);
-      // Fallback: immediate fade if ScrollTrigger fails
+      // Silenced in production; fallback to immediate fade
       gsap.to(el, { opacity: 1, duration: this.duration, ease: this.ease });
     }
   }
