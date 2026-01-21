@@ -60,10 +60,10 @@ export default function initMinimalPointer() {
     lastValidMask.x = vx;
     lastValidMask.y = vy;
     lastValidMask.r = vr;
-    if (debug && (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r))) {
-      // eslint-disable-next-line no-console
-      console.debug('[minimalPointer] dropped invalid mask value', { x, y, r, used: { vx, vy, vr } });
-    }
+    // if (debug && (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r))) {
+    //   // eslint-disable-next-line no-console
+    //   console.debug('[minimalPointer] dropped invalid mask value', { x, y, r, used: { vx, vy, vr } });
+    // }
   }
 
   // GSAP-driven radius animation for smooth, interruptible tweens
