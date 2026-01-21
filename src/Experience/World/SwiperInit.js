@@ -81,17 +81,9 @@ export function initSwiper(scope = document) {
             keyboard: { enabled: true },
             // Allow swiping on desktop if desired
             simulateTouch: true,
-            // Debug hooks: log slide-change lifecycle to help diagnose "double" navigation
-            on: {
-                slideChangeTransitionStart() {
-                    // eslint-disable-next-line no-console
-                    console.debug('swiper:start', { container: container.id || container.className, realIndex: this.realIndex, activeIndex: this.activeIndex });
-                },
-                slideChangeTransitionEnd() {
-                    // eslint-disable-next-line no-console
-                    console.debug('swiper:end', { container: container.id || container.className, realIndex: this.realIndex, activeIndex: this.activeIndex });
-                }
-            }
+           
+                 
+            
         };
 
         try {

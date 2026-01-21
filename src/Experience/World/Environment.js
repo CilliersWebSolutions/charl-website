@@ -1,4 +1,3 @@
-import Experience from '../Experience';
 import * as THREE from 'three';
 export default class Environment {
     constructor(experience, container) {
@@ -10,13 +9,7 @@ export default class Environment {
 
         // Three-point lighting setup
         this.addThreePointLights();
-
-        if (this.containerAttribute === 'lining') {
-            //this.setEnvironmentMap();
-            //this.setDirectionalLightMap();
-        }
-
-        console.log(this.scene.children);
+     
     }
 
     addThreePointLights() {
