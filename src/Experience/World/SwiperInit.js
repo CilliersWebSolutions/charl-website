@@ -68,10 +68,9 @@ export function initSwiper(scope = document) {
             watchOverflow: true,
             // Force a single slide per view at all sizes (Designer preference)
             breakpoints: {
-                0:    { slidesPerView: 1, spaceBetween: 12 },
-                640:  { slidesPerView: 1, spaceBetween: 16 },
-                900:  { slidesPerView: 1, spaceBetween: 24 },
-                1200: { slidesPerView: 1, spaceBetween: 32 },
+         
+                991:  { slidesPerView: 1, spaceBetween: 24 },
+                1920: { slidesPerView: 1, spaceBetween: 48 },
             },
             // Navigation & pagination (validated above)
             navigation: nav,

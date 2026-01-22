@@ -1,4 +1,4 @@
-/* Charl Website — Consolidated Webflow CSS
+<style>/* Charl Website — Consolidated Webflow CSS
 	 Contains:
 	 - Swiper overrides (scoped to `.cw-swiper`)
 	 - Minimal pointer + mask overrides
@@ -196,6 +196,7 @@ padding-top: 6rem
 	left: 50% !important;
 	transform: translateX(-50%) !important;
 	white-space: nowrap;
+	
 }
 
 /* Reset vendor margins so our flex gap controls spacing */
@@ -285,6 +286,7 @@ padding-top: 6rem
 .cw-swiper.cw-dir-backward .swiper-pagination-bullet-active .cw-swiper-label::after { transform-origin: right center; }
 .cw-swiper.cw-dir-backward .swiper-pagination-bullet:not(.swiper-pagination-bullet-active) .cw-swiper-label::after { transform-origin: left center; }
 
+/* Dot element placed between labels */
 .cw-swiper-dot {
 	width: 8px;
 	height: 8px;
@@ -446,7 +448,8 @@ padding-top: 6rem
 	mask-position: 0 0;
 }
 
-:root {}
+
+
 /* Prevent initial flash: hide fade targets until JS attaches triggers, only on desktop */
 @media (min-width: 991px) {
 	[fade-section], [Fade-section],
@@ -466,12 +469,13 @@ img, video, canvas {
 	 ----------------------------------------- */
 
 .revealed-wrapper {
-	width: 10.5rem; /* match your button width */
+	width: auto; /* allow full email/number to show */
 	display: inline-flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start; /* keep items left with fixed gap */
 	gap: 0.45rem;
-	padding: 1rem 0.65rem;
+	padding-top: 1rem ;
+  padding-bottom: 1rem ;
 
 	
 	
@@ -493,25 +497,51 @@ img, video, canvas {
 	color: #191d19;
 	letter-spacing: 0.3px;
 	user-select: text;
+	white-space: nowrap; /* keep label on one line */
+	flex: 0 0 auto; /* size to content; don't shrink or grow */
 }
 
 .revealed-text::selection { background: #d0eaff; }
 
 .copy-icon {
-	font-size: 0.95rem;
+	font-size: 1.2rem;
 	opacity: 0.65;
 	cursor: pointer;
 	transition: opacity 0.2s ease, transform 0.15s ease;
 	user-select: none;
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.2rem; /* consistent icon box */
+	height: 1.2rem;
+	-webkit-tap-highlight-color: transparent;
+	flex: 0 0 auto;
 }
 
 .copy-icon:hover { opacity: 1; transform: scale(1.12); }
 .copy-icon.copied { color: #2e8b57; opacity: 1; transform: scale(1.15); }
-.copy-icon:focus { outline: 2px solid #4a90e2; outline-offset: 2px; }
+/* Show focus ring only for keyboard users */
+.copy-icon:focus { outline: none; }
+.copy-icon:focus-visible { outline: 2px solid #03854c; outline-offset: 2px; border-radius: 4px; }
+
+/* Layered icon fade: clipboard → check SVG */
+.copy-icon > .copy-clipboard,
+.copy-icon > .copy-check {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	transition: opacity 200ms ease, transform 200ms ease;
+}
+.copy-icon > .copy-check { opacity: 0; transform: scale(0.95); }
+.copy-icon.copied > .copy-clipboard { opacity: 0; transform: scale(1.05); }
+.copy-icon.copied > .copy-check { opacity: 1; transform: scale(1); }
+.copy-icon svg { display: block; width: 100%; height: 100%; }
 
 .button-email,
 .button-phone {
-	width: 10.5rem; /* match reveal width */
+	width: auto; /* match reveal width to content */
 	transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
@@ -520,17 +550,18 @@ img, video, canvas {
 
 
 /* Revealed contact text responsive sizing */
-.revealed-wrapper { font-size: inherit; }
-.revealed-wrapper .revealed-text { font-size: inherit; }
-.revealed-wrapper .copy-icon { font-size: 1em; }
+.revealed-wrapper { font-size: 1.2rem; }
+.revealed-wrapper .revealed-text { font-size: 1.2rem; }
+.revealed-wrapper .copy-icon { font-size: 1.2rem; }
 
 @media (max-width: 991px) {
 	.revealed-wrapper { font-size: 1rem; }
-	.revealed-wrapper .copy-icon { font-size: 1em; }
+	.revealed-wrapper .copy-icon { font-size: 1rem; }
 }
 
 @media (max-width: 768px) {
 	.revealed-wrapper { font-size: 1.1rem; }
-	.revealed-wrapper .copy-icon { font-size: 1em; }
+	.revealed-wrapper .copy-icon { font-size: 1rem; }
 }
 
+</style>
