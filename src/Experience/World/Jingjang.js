@@ -134,14 +134,21 @@
     if (!buttons.length) return;
 
     buttons.forEach(btn => {
-      const handler = () => reveal(btn, chunks, label);
+      const handler = (ev) => {
+        if (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        reveal(btn, chunks, label);
+      };
 
       btn.addEventListener('click', handler, { once: true });
 
       btn.addEventListener('keydown', ev => {
         if (ev.key === 'Enter' || ev.key === ' ') {
           ev.preventDefault();
-          handler();
+          ev.stopPropagation();
+          handler(ev);
         }
       }, { once: true });
     });

@@ -470,6 +470,7 @@ img, video, canvas {
 
 .revealed-wrapper {
 	width: auto; /* allow full email/number to show */
+  height: 2.5rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: flex-start; /* keep items left with fixed gap */
