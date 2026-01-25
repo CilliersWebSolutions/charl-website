@@ -134,6 +134,18 @@
     if (!buttons.length) return;
 
     buttons.forEach(btn => {
+      const cancelEarly = (ev) => {
+        if (ev) {
+          // Only stop bubbling so ancestors don't react; allow default
+          // so mobile browsers still dispatch the subsequent click.
+          ev.stopPropagation();
+        }
+      };
+      // Stop ancestors from reacting early, but don't prevent default to avoid suppressing mobile click
+      btn.addEventListener('pointerdown', cancelEarly);
+      btn.addEventListener('touchstart', cancelEarly, { passive: true });
+      btn.addEventListener('mousedown', cancelEarly);
+
       const handler = (ev) => {
         if (ev) {
           ev.preventDefault();
@@ -142,7 +154,8 @@
         reveal(btn, chunks, label);
       };
 
-      btn.addEventListener('click', handler, { once: true });
+      // Use capture so we cancel before ancestor handlers/default actions
+      btn.addEventListener('click', handler, { once: true, capture: true });
 
       btn.addEventListener('keydown', ev => {
         if (ev.key === 'Enter' || ev.key === ' ') {

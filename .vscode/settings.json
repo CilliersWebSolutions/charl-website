@@ -1,4 +1,7 @@
 {
+  "npm.packageManager": "pnpm"
+}
+{
     "pieces.cloudCapabilities": "Blended",
     "pieces.telemetry": true
 }
