@@ -8,7 +8,7 @@ export default [
     {
         name: 'liningTexture',
         type: 'texture',
-        path: 'https://cdn.prod.website-files.com/6973775c7a3601a9f840ee21/6979de591b6aff71916f8f94_baked-albedo2k-v4.avif'
+        path: 'https://cdn.prod.website-files.com/6973775c7a3601a9f840ee21/6979e69aa62958f63984d474_baked-albedo2k-v4.jpg'
     },
 
     // Normal texture removed to reduce payload
