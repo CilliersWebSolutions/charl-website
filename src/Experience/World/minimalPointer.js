@@ -39,13 +39,28 @@ export default function initMinimalPointer() {
   const duration = 180; // ms
   let gsapTween = null;
   let currentRadius = 0;
-  let _savedBodyCursor = null;
   let lastMouse = { x: 50, y: 50 };
   let leaveTimeout = null;
   let leaveSequence = 0;
   // keep last valid mask values to avoid writing invalid CSS vars
   let lastValidMask = { x: 0, y: 0, r: 0 };
   const debug = false;
+
+  // Cursor guard: prevent external scripts/interactions from setting
+  // `cursor: none` on the body while this pointer is active.
+  try {
+    const cursorGuard = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'style') {
+          const c = (document.body && document.body.style && document.body.style.cursor) || '';
+          if (c && c.toLowerCase() === 'none') {
+            document.body.style.cursor = '';
+          }
+        }
+      }
+    });
+    cursorGuard.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+  } catch (err) {}
 
   // set mask variables (x,y in px relative to faded box, r in px)
   function setMaskVars(x, y, r) {
