@@ -165,8 +165,8 @@
 	position: relative; 
 	width: 100%; 
 	overflow: hidden; 
-	 padding-left: 4.5rem;
-padding-right: 4.5rem;
+	 padding-left: 3.4rem;
+padding-right: 3.4rem;
 padding-bottom: 6rem;
 padding-top: 6rem
 }
@@ -179,7 +179,7 @@ padding-top: 6rem
 	right: var(--swiper-pagination-right, 0);
 	/* Move pagination upwards by 4rem relative to the configured var.
 		 Using calc with a sane default avoids 'auto' fallback issues. */
-	top: 2rem;
+	top: 3.5rem;
 	bottom: var(--swiper-pagination-bottom, 1rem);
 	z-index: 20;
 	display: flex;
@@ -403,7 +403,7 @@ padding-top: 6rem
 }
 
 .cw-mouse-circle {
-	position: fixed;
+	position: absolute;
 	left: 0;
 	top: 0;
 	width: var(--cw-pointer-size, 500px);
@@ -412,7 +412,7 @@ padding-top: 6rem
 	border: 2px solid rgba(26,140,91,0.85);
 	background: rgba(26,140,91,0.06);
 	box-shadow: 0 8px 20px rgba(6,120,80,0.12);
-	z-index: 100;
+	z-index: 3;
 	pointer-events: none;
 	transform: translate3d(var(--cw-x, -9999px), var(--cw-y, -9999px), 0) translate(-50%,-50%) scale(var(--cw-scale, 0.001));
 	opacity: 0;

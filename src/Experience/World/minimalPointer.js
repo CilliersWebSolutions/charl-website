@@ -6,7 +6,9 @@ export default function initMinimalPointer() {
   if (!faded) return;
   const pointer = document.createElement('div');
   pointer.className = 'cw-mouse-circle';
-  document.body.appendChild(pointer);
+  // Anchor pointer inside the faded container so it participates in the
+  // section's stacking context and cannot overlay unrelated UI.
+  faded.appendChild(pointer);
 
   // create an overlay to host the mask (avoids repainting the image element)
   const overlay = document.createElement('div');
@@ -179,9 +181,9 @@ export default function initMinimalPointer() {
     // refresh geometry once per RAF to avoid stale bounding rects
     updateRect();
     const rect = latestRect;
-    // update pointer position (viewport coords) and mask position (relative coords)
-    pointer.style.setProperty('--cw-x', `${lastMouse.x}px`);
-    pointer.style.setProperty('--cw-y', `${lastMouse.y}px`);
+    // update pointer position (relative coords within the faded container)
+    pointer.style.setProperty('--cw-x', `${relX}px`);
+    pointer.style.setProperty('--cw-y', `${relY}px`);
     pointer.style.setProperty('--cw-scale', String(Math.max(0.001, currentRadius / targetRadius)));
     const relX = Math.max(0, Math.min(rect.width, lastMouse.x - rect.left));
     const relY = Math.max(0, Math.min(rect.height, lastMouse.y - rect.top));
