@@ -96,19 +96,7 @@ export default function initMinimalPointer() {
         // update pointer scale
         const scale = Math.max(0.001, currentRadius / targetRadius);
         pointer.style.setProperty('--cw-scale', String(scale));
-        // Hide native cursor while mask is visible (radius > 0). Preserve
-        // previous body cursor so we can restore it on hide.
-        try {
-          if (currentRadius > 0.5) {
-            if (_savedBodyCursor === null) _savedBodyCursor = document.body.style.cursor || '';
-            document.body.style.cursor = 'none';
-          } else if (_savedBodyCursor !== null) {
-            document.body.style.cursor = _savedBodyCursor || '';
-            _savedBodyCursor = null;
-          }
-        } catch (err) {
-          /* ignore (e.g., document not available) */
-        }
+        // Always keep the native cursor visible; no body-level cursor hiding.
         // update mask immediately to keep visuals in sync
         const rect = latestRect || faded.getBoundingClientRect();
         const relX = Math.max(0, Math.min(rect.width, lastMouse.x - rect.left));

@@ -390,7 +390,7 @@ padding-top: 6rem
 	/* mask is applied via the overlay element to avoid repainting the image
 		 element which can cause flashing on some browsers */
 	z-index: 1;
-	cursor: none;
+	cursor: auto; /* keep native cursor visible */
 }
 .quickfacts-fadedimage img {
 	position: absolute;
