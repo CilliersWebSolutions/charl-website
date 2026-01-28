@@ -25,7 +25,7 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  z-index: 1;
+  z-index: 0;
 }
 
 .cw-mouse-circle {
@@ -38,7 +38,7 @@
   border: 2px solid rgba(26,140,91,0.85);
   background: rgba(26,140,91,0.06);
   box-shadow: 0 8px 20px rgba(6,120,80,0.12);
-  z-index: 3;
+  z-index: 10;
   pointer-events: none;
   transform: translate3d(var(--cw-x, -9999px), var(--cw-y, -9999px), 0) translate(-50%,-50%) scale(var(--cw-scale, 0.001));
   opacity: 0;
@@ -49,7 +49,7 @@
   opacity: 1;
   background: rgba(26,140,91,0.12);
   box-shadow: 0 12px 30px rgba(6,120,80,0.18);
-  z-index: 3;
+  z-index: 10;
 }
 .cw-mouse-overlay {
   position: absolute;
@@ -58,7 +58,7 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: 1;
   --mask-x: 50%;
   --mask-y: 50%;
   --mask-r: 0.01px;
