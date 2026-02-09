@@ -377,7 +377,7 @@ padding-top: 6rem
 */
 
 :root{
-	--cw-pointer-size: 400px; /* default pointer diameter */
+	--cw-pointer-size: 750px; /* default pointer diameter */
 	--cw-accent: #1aa05b;
 }
 
