@@ -173,6 +173,30 @@ export default function initMinimalPointer() {
           requestAnimationFrame(renderFrame);
         }
       }
+    } else {
+      // If pointer is inactive but scrolling brings the element under the
+      // stationary cursor, activate it. This fixes the UX where users scroll
+      // into a section without moving their mouse — the pointer should appear
+      // immediately under the cursor, not wait for the next mousemove event.
+      const rect = latestRect;
+      const inside = (
+        lastMouse.x >= rect.left && lastMouse.x <= rect.right &&
+        lastMouse.y >= rect.top && lastMouse.y <= rect.bottom
+      );
+      if (inside) {
+        // Verify that the faded element is actually under the cursor
+        // (handles z-index stacking and overlapping elements)
+        const under = document.elementFromPoint(lastMouse.x, lastMouse.y);
+        const shouldActivate = under && (under === faded || faded.contains(under));
+        if (shouldActivate) {
+          handleEnter();
+          animateRadiusWithGSAP(targetRadius);
+          if (!rafScheduled) {
+            rafScheduled = true;
+            requestAnimationFrame(renderFrame);
+          }
+        }
+      }
     }
   }, { passive: true });
 
