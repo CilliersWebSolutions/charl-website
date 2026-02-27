@@ -41,8 +41,7 @@ export function initSwiper(scope = document) {
         const pagElIsValid = (pagEl instanceof Element);
 
         // Designer-editable labels for pagination. Update this array to change visible labels.
-        const paginationLabels = ['Quality Assurance', 'Design Review', 'Construction Support'];
-
+        const paginationLabels = ['Quality Assurance', 'Design Review', 'Construction Support', 'Material Testing'];
         const pag = pagElIsValid ? {
             el: pagEl,
             clickable: true,
