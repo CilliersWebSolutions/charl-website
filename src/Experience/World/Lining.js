@@ -54,7 +54,7 @@ export default class Lining {
         duration: 0.33,         // seconds for full wave (configurable)
         heightAbove: 8.0,      // how high above to start for all layers
         layerStates: [],       // Animation state for each layer
-        groundFadeDuration: 0.33, // seconds for ground fade
+        groundFadeDuration: 0.5, // seconds for ground fade
     };
     constructor(experience) {
         // Multiplier for stone size (GUI adjustable)
